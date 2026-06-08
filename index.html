@@ -5776,8 +5776,14 @@ function populateMapSelect(cat) {
     });
 }
 function onMapCategoryChange() {
-    // 僅切換右側清單內容，不立即移動；玩家於右側清單點選後才會 changeMap()
-    populateMapSelect(document.getElementById('map-category').value);
+    // 切換分類時，重建右側清單並讓人物一併移動到該分類的第一張地圖
+    let cat = document.getElementById('map-category').value;
+    populateMapSelect(cat);
+    let first = (MAP_CATEGORIES[cat] && MAP_CATEGORIES[cat][0]) ? MAP_CATEGORIES[cat][0].v : null;
+    if (first) {
+        document.getElementById('map-select').value = first;
+        changeMap();   // 實際移動（受控狀態時 changeMap 會擋下並還原兩個選單）
+    }
 }
 function setMapSelectors(mapKey) {
     // 將「分類選單 + 地圖選單」同步到指定地圖
