@@ -715,10 +715,10 @@ const DB = {
         "acc_116": { n: "傳送控制戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 50000, gachaWeight: 1, d: "攜帶在背包即可生效（無需裝備）：手動施放傳送術/使用瞬移卷軸時必定遭遇 BOSS。" },
         "acc_117": { n: "變形控制戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 50000, gachaWeight: 1, d: "攜帶在背包即可生效（無需裝備）：使用變形卷軸時可指定變身型態。" },
         "sherine_crystal": { n: "席琳結晶", type: "etc", p: 0, noUse: true, c: "c-sherine", gachaWeight: 0, d: "蘊含席琳力量的珍貴結晶，無法直接使用。進行「席琳製作」時加入材料，可使成品必定附帶一種席琳套裝效果。（席琳的世界掉落限定）" },   // 🔮 潘朵拉抽不到(gachaWeight:0)、無法使用(noUse)、名稱同套裝綠光(c-sherine)
-        "item_dragon_claw": { n: "飛龍的爪子", p: 1, noUse: true, gachaWeight: 0, d: "鋒利如刃的巨爪，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：飛龍 1% 掉落
-        "item_lizard_horn": { n: "蜥蜴的角", p: 1, noUse: true, gachaWeight: 0, d: "邪惡蜥蜴額上的尖角，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：邪惡蜥蜴 0.01% 掉落
-        "item_crystal_ball": { n: "水晶球", p: 1, noUse: true, gachaWeight: 0, d: "巫師用以窺探命運的水晶球，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：巫師 0.01% 掉落
-        "item_orc_amulet": { n: "妖魔戰士護身符", p: 1, noUse: true, gachaWeight: 0, d: "妖魔戰士隨身佩戴的護身符，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：五種妖魔各 0.01% 掉落
+        "item_dragon_claw": { n: "飛龍的爪子", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "鋒利如刃的巨爪，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：飛龍 1% 掉落
+        "item_lizard_horn": { n: "蜥蜴的角", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "邪惡蜥蜴額上的尖角，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：邪惡蜥蜴 0.01% 掉落
+        "item_crystal_ball": { n: "水晶球", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "巫師用以窺探命運的水晶球，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：巫師 0.01% 掉落
+        "item_orc_amulet": { n: "妖魔戰士護身符", p: 1, c: "text-blue-300", noUse: true, gachaWeight: 0, d: "妖魔戰士隨身佩戴的護身符，似乎與龍之谷深處的傳說有關……（無法使用）" },   // 🔧 卡瑞任務道具：五種妖魔各 0.01% 掉落
         "rng_mr": { n: "抗魔戒指", type: "acc", slot: "ring", ac: 0, mr: 5, req: "all", safe: 0, p: 10000, gachaWeight: 1 },
         "acc_118": { n: "守護戒指", type: "acc", slot: "ring", ac: 1, req: "all", safe: 0, p: 10000, gachaWeight: 1 },
         "acc_119": { n: "長者戒指", type: "acc", slot: "ring", ac: 0, req: "all", safe: 0, p: 10000, mmp: 10, mpR: 1, gachaWeight: 1 },
@@ -758,9 +758,9 @@ const DB = {
         "scroll_magicbarrier": { n: "魔法卷軸(魔法屏障)", type: "scroll", req: "all", p: 1500, c: "text-cyan-300", d: "使用後獲得「魔法屏障」狀態，持續16秒；成功抵擋一次技能傷害後3秒內無法再次施放（自然到期或取消則無冷卻）", eff: "magicbarrier", gachaWeight: 0 },
         "scroll_teleport": { n: "瞬間移動卷軸", type: "scroll", req: "all", p: 82, c: "text-sky-300", d: "使用後發動傳送術", eff: "teleport_scroll", gachaWeight: 0 },
         "scroll_revive": { n: "復活卷軸", type: "scroll", req: "all", p: 1000, c: "text-yellow-300", d: "持有死亡後可選擇原地復活，冷卻15秒", gachaWeight: 0 },
-        "item_blueflute": { n: "藍色長笛", p: 1, c: "text-sky-300", d: "試煉所需的材料。", gachaWeight: 0 },
-        "item_ancientkey": { n: "古代鑰匙", p: 1, c: "text-amber-300", d: "試煉所需的材料。", gachaWeight: 0 },
-        "item_nightvision": { n: "夜之視野", p: 1, c: "text-indigo-300", d: "試煉所需的材料。", gachaWeight: 0 },
+        "item_blueflute": { n: "藍色長笛", p: 1, c: "text-white", d: "試煉所需的材料。", gachaWeight: 0 },   // 🔧 名字改白色（避免與藍色系材料混淆）
+        "item_ancientkey": { n: "古代鑰匙", p: 1, c: "text-blue-300", d: "試煉所需的材料。", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
+        "item_nightvision": { n: "夜之視野", p: 1, c: "text-blue-300", d: "試煉所需的材料。", gachaWeight: 0 },
         "candle": { n: "回憶蠟燭", type: "misc", req: "all", p: 100000, c: "text-red-500", d: "退還所有能力點數，重新分配", eff: "reset", gachaWeight: 0 },
         "panacea_str": { n: "萬能藥(STR)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升力量+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "str", plv: 50, gachaWeight: 0 },
         "panacea_dex": { n: "萬能藥(DEX)", type: "misc", req: "all", p: 10000, c: "text-pink-300", d: "可永久提升敏捷+1，直到使用回憶蠟燭為止（最多20瓶，不可突破屬性上限60）", eff: "panacea", pstat: "dex", plv: 50, gachaWeight: 0 },
@@ -783,7 +783,7 @@ const DB = {
         "new_item_bless_acc": { n: "賦予飾品祝福卷軸", type: "misc", p: 0, c: "text-purple-300", d: "於象牙塔『碧恩』處用來祝福飾品（無法直接使用）。", isAnc: true, noUse: true, gachaWeight: 1 },
         "new_item_uncurse": { n: "解除詛咒的卷軸", type: "misc", p: 0, c: "text-cyan-200", d: "於象牙塔『碧恩』處用來移除裝備的詛咒（無法直接使用）。", noUse: true, gachaWeight: 10 },
         "new_item_143": { n: "肉", type: "pot", req: "all", p: 1, d: "食用後獲得『誘捕』狀態300秒", eff: "meat", gachaWeight: 0 },
-        "new_item_144": { n: "夏洛伯之爪", p: 1, gachaWeight: 0 },
+        "new_item_144": { n: "夏洛伯之爪", p: 1, c: "text-blue-300", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
         "new_item_145": { n: "阿吐巴圖騰", p: 600, gachaWeight: 0 },
         "new_item_146": { n: "那魯加圖騰", p: 300, gachaWeight: 0 },
         "new_item_147": { n: "都達瑪拉圖騰", p: 30, gachaWeight: 0 },
@@ -835,25 +835,25 @@ const DB = {
         "new_item_193": { n: "風龍鱗", p: 5000, gachaWeight: 10 },
         "new_item_194": { n: "阿西塔基奧的灰燼", p: 1000, gachaWeight: 10 },
         "new_item_195": { n: "精靈玉", p: 100, gachaWeight: 100 },
-        "new_item_196": { n: "古老的交易文件", p: 1, gachaWeight: 0 },
+        "new_item_196": { n: "古老的交易文件", p: 1, c: "text-blue-300", gachaWeight: 0 },   // 🔧 試煉材料統一藍色
         "new_item_197": { n: "搜索狀", p: 1, gachaWeight: 0 },
-        "new_item_198": { n: "黑騎士的誓約", p: 1, gachaWeight: 0 },
-        "new_item_199": { n: "都達瑪拉妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_200": { n: "那魯加妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_201": { n: "甘地妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_202": { n: "阿吐巴妖魔魔法書", p: 1, gachaWeight: 0 },
-        "new_item_203": { n: "骷髏頭", p: 1, gachaWeight: 0 },
-        "new_item_204": { n: "食屍鬼的指甲", p: 1, gachaWeight: 0 },
-        "new_item_205": { n: "食屍鬼的牙齒", p: 1, gachaWeight: 0 },
-        "new_item_206": { n: "龍龜甲", p: 1, gachaWeight: 0 },
+        "new_item_198": { n: "黑騎士的誓約", p: 1, c: "text-blue-300", gachaWeight: 0 },   // 🔧 試煉材料統一藍色（198~206、208、212~214、240 同）
+        "new_item_199": { n: "都達瑪拉妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_200": { n: "那魯加妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_201": { n: "甘地妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_202": { n: "阿吐巴妖魔魔法書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_203": { n: "骷髏頭", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_204": { n: "食屍鬼的指甲", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_205": { n: "食屍鬼的牙齒", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_206": { n: "龍龜甲", p: 1, c: "text-blue-300", gachaWeight: 0 },
         "new_item_207": { n: "生命的卷軸", p: 1, gachaWeight: 0 },
-        "new_item_208": { n: "蛇女之鱗", p: 1, gachaWeight: 0 },
+        "new_item_208": { n: "蛇女之鱗", p: 1, c: "text-blue-300", gachaWeight: 0 },
         "new_item_209": { n: "返生藥水", p: 1, gachaWeight: 0 },
         "new_item_210": { n: "感謝信", p: 1, gachaWeight: 0 },
         "new_item_211": { n: "村民的遺物", p: 1, gachaWeight: 0 },
-        "new_item_212": { n: "不死族的骨頭", p: 1, gachaWeight: 0 },
-        "new_item_213": { n: "受詛咒的精靈書", p: 1, gachaWeight: 0 },
-        "new_item_214": { n: "不死族的鑰匙", p: 1, gachaWeight: 0 },
+        "new_item_212": { n: "不死族的骨頭", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_213": { n: "受詛咒的精靈書", p: 1, c: "text-blue-300", gachaWeight: 0 },
+        "new_item_214": { n: "不死族的鑰匙", p: 1, c: "text-blue-300", gachaWeight: 0 },
         "new_item_215": { n: "殭屍鑰匙", p: 1, gachaWeight: 0 },
         "new_item_216": { n: "骷髏鑰匙", p: 1, gachaWeight: 0 },
         "new_item_217": { n: "密室鑰匙", p: 1, gachaWeight: 0 },
@@ -880,7 +880,7 @@ const DB = {
 		"new_item_elfwing": { n: "精靈羽翼", p: 10, gachaWeight: 100 },
 		"new_item_mermaid_scale": { n: "人魚之鱗", p: 10, gachaWeight: 10 },
 		"new_item_239": { n: "潘朵拉抽獎卷", p: 0, gachaWeight: 0 },
-		"new_item_240": { n: "變形怪的血", p: 1, gachaWeight: 0 },
+		"new_item_240": { n: "變形怪的血", p: 1, c: "text-blue-300", gachaWeight: 0 },
 		"new_item_241": { n: "王族搜索狀", p: 1000, gachaWeight: 0, d: "擊敗血盟敵人必定取得。可向血盟盟主交出，換取盟主的祝福。" },
 		
 		        // ===== 法師魔法書 =====
