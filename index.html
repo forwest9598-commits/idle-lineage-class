@@ -3894,8 +3894,8 @@ function playerAttack() {
                 target._bluntDelayed = true;
             }
         }
-        // 🔧 硬皮消磨：玩家一般攻擊命中時，依重擊與武器（單手鈍器鈍擊 -1/重擊 -5、雙手鈍器/屠龍劍重擊 -20、其餘重擊 -2）扣減
-        if (target.curHp > 0) wearHardSkin(target, player.eq.wpn ? player.eq.wpn.id : null, result.heavy, _isBlunt1h);
+        // 🔧 硬皮消磨：玩家一般攻擊命中時固定再磨 1（basic），並依重擊與武器（單手鈍器鈍擊 -1/重擊 -5、雙手鈍器/屠龍劍重擊 -20、其餘重擊 -2）疊加扣減
+        if (target.curHp > 0) wearHardSkin(target, player.eq.wpn ? player.eq.wpn.id : null, result.heavy, _isBlunt1h, true);
         if (target.curHp <= 0) killMob(mapState.targetIdx);
         else renderMobs();
     } else {
@@ -4771,7 +4771,8 @@ function mobHasTag(m, tag) {
 // ===== 🔧 硬皮系統 =====
 // 硬皮值＝額外的「物理」傷害減免（魔法傷害不減）。最大值：一般怪 等級×1.5、頭目 等級×3、三大龍 等級×5、
 // 城門固定100、守護塔固定50；席琳的世界 ×2（攻城區不適用）。
-// 消磨：單手鈍器鈍擊 -1、單手鈍器重擊 -5、雙手鈍器/屠龍劍重擊 -20、其餘一般攻擊重擊 -2；
+// 消磨：玩家/傭兵一般攻擊命中固定 -1（與下列各項疊加）；單手鈍器鈍擊 -1、單手鈍器重擊 -5、
+//       雙手鈍器/屠龍劍重擊 -20、其餘一般攻擊重擊 -2、粉碎武器未重擊命中 -1；
 //       傭兵以外的召喚物重擊不消磨。每 10 秒恢復 3% 最大值。
 function initHardSkin(m) {
     if (!m || !m.hard) return;
@@ -4787,7 +4788,7 @@ function initHardSkin(m) {
 }
 function mobHardSkin(m) { return (m && m.hardSkin > 0) ? m.hardSkin : 0; }   // 物理減傷量（供傷害公式扣減）
 // 依武器特效與重擊/鈍擊消磨硬皮值；wpnId 為攻擊者（玩家或傭兵）的武器 id
-function wearHardSkin(target, wpnId, heavy, bluntProc) {
+function wearHardSkin(target, wpnId, heavy, bluntProc, basic) {
     if (!target || !(target.hardSkin > 0)) return;
     let tags = wpnId ? getWeaponTags(wpnId) : [];
     let dec = 0;
@@ -4801,6 +4802,7 @@ function wearHardSkin(target, wpnId, heavy, bluntProc) {
         dec += 1;   // 🔧 粉碎武器：一般攻擊命中(未重擊)也磨 1 硬皮值
     }
     if (bluntProc) dec += 1;   // 單手鈍器鈍擊
+    if (basic) dec += 1;   // 🔧 玩家/傭兵一般攻擊命中：固定再磨 1 硬皮值（與上述重擊/粉碎/鈍擊削減疊加）
     if (dec > 0) target.hardSkin = Math.max(0, target.hardSkin - dec);
 }
 function tryInstakill(m, ik, skillName, idx) {
@@ -4995,8 +4997,8 @@ function allyAttackOnce(ally) {
         t.curHp -= dmg; t.justHit = getWpnEle(ally.eq ? ally.eq.wpn : null, wpn); mobWake(t);
         let mark = (heavy && isCrit) ? '會心一擊' : (isCrit ? '爆擊' : (heavy ? '重擊' : ''));
         logCombat(`${kp}<span class="text-sky-300 font-bold">【協力·${ally._allyName}】</span>攻擊 <span class="${getMobColor(t.lv)}">${t.n}</span>，造成 ${dmg} 點傷害${mark?'（'+mark+'!）':''}。`, 'player');
-        // 🔧 硬皮消磨：傭兵一般攻擊（與玩家同規則）；單手鈍器鈍擊另由 allyOnHitEffects 觸發
-        if (t.curHp > 0) wearHardSkin(t, ally.eq && ally.eq.wpn ? ally.eq.wpn.id : null, heavy, false);
+        // 🔧 硬皮消磨：傭兵一般攻擊命中固定再磨 1（basic，與玩家同規則）；單手鈍器鈍擊另由 allyOnHitEffects 觸發
+        if (t.curHp > 0) wearHardSkin(t, ally.eq && ally.eq.wpn ? ally.eq.wpn.id : null, heavy, false, true);
         allyOnHitEffects(ally, t, { dmg: dmg, heavy: heavy, hardSkin: _hsT });        // 🔧 命中後特效：穿透/即死/出血/鈍擊/切割（hardSkin 供穿透精通無視判定）
         allyWeaponProcs(ally, t, { hit: true, dmg: dmg });            // 🔧 普攻判定特效：瑪那回魔/共鳴/魔擊/月光爆裂
     }
