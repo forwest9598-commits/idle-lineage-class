@@ -1,6 +1,6 @@
 /** 遊戲核心資料庫 */
 // 🏷️ 遊戲版本號（顯示於登入頁面下方·單一真相來源）：更新版本時只改這一行，登入頁面自動同步。
-const GAME_VERSION = 'v3.1.6';
+const GAME_VERSION = 'v3.1.8';
 // ===== 💾 存檔壓縮（LZString compressToUTF16/decompressFromUTF16·MIT, Pieroxy）：localStorage 內部以 UTF-16 壓縮，省 ~89%，繞過 5MB 上限 =====
 //  ⚠️ 只壓 localStorage（存檔位/倉庫/共用桶/_bak）；匯出檔維持明文 JSON（可攜·importSave 用 JSON.parse 驗證）。_lzGet 相容舊明文存檔（無 'LZ1:' 前綴→原樣回傳）。
 var LZString = (function () {
@@ -586,10 +586,6 @@ const DB = {
         "arm_89": { n: "瑪那斗篷", type: "arm", slot: "cloak", ac: 2, req: "mage", safe: 4, p: 7200, mpR: 5, gachaWeight: 10 },
         "bot_short": { n: "短統靴", type: "arm", slot: "boots", ac: 1, req: "all", safe: 4, p: 299, gachaWeight: 100 },
         "arm_90": { n: "長靴", type: "arm", slot: "boots", ac: 2, req: "all", safe: 4, p: 3260, gachaWeight: 100 },
-        // 🦵 脛甲（slot:shin·盔甲下方的額外防具·可強化·全職業）——基礎階梯，之後可再擴充
-        "shin_cloth":   { n: "布脛甲",   type: "arm", slot: "shin", ac: 1, req: "all", safe: 4, p: 400,   gachaWeight: 100 },
-        "shin_leather": { n: "皮脛甲",   type: "arm", slot: "shin", ac: 2, req: "all", safe: 4, p: 1800,  gachaWeight: 100 },
-        "shin_steel":   { n: "鋼鐵脛甲", type: "arm", slot: "shin", ac: 3, req: "all", safe: 4, p: 20000, gachaWeight: 20 },
         "bot_baless": { n: "巴列斯長靴", legend: true, type: "arm", slot: "boots", ac: 2, str: 1, req: "knight,elf", safe: 6, p: 60000, gachaWeight: 1 },   // 🔧 巴列斯掉落（AC-2＝ac:2；力量+1）
         "arm_91": { n: "皮涼鞋", type: "arm", slot: "boots", ac: 0, req: "all", safe: 4, p: 20, gachaWeight: 100 },
         "arm_92": { n: "銀釘皮涼鞋", type: "arm", slot: "boots", ac: 1, req: "all", safe: 4, p: 230, gachaWeight: 100 },
