@@ -282,8 +282,8 @@ player.inv.forEach(i => {
     // ===== 渲染物品 =====
     let el = document.createElement('div'); 
     // className 這裡移除了 isDisabled 相關的判定，讓所有項目都可以互動
-    el.className = `list-item text-base ${itemBg} rounded mb-1 ${i.lock ? 'border-red-900 border-2' : ''}`;
-    el.title = plainInventoryItemName(i);
+    el.className = `list-item tip-host text-base ${itemBg} rounded mb-1 ${i.lock ? 'border-red-900 border-2' : ''}`;
+    el.setAttribute('data-tip-uid', i.uid); el.setAttribute('data-tip-src', 'inv');   // 🖱️ hover 即時顯示完整物品資訊 tooltip（同技能·取代原生 title 慢速提示）
     if (i.lock) el.classList.add('classic-item-locked');
     else if (i.junk) el.classList.add('classic-item-junk');
     

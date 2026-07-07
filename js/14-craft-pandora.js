@@ -1742,6 +1742,7 @@ window.onload = () => {
     function findTipItem(src, uidv){
         try {
             if(src === 'wh'){ let w = loadWarehouse(); return ((w && w.items) || []).find(x => x.uid === uidv) || null; }
+            if(src === 'eq'){ let e = (typeof player !== 'undefined' && player && player.eq) || {}; for(let k in e){ if(e[k] && e[k].uid === uidv) return e[k]; } return null; }   // 🖱️ 已裝備物品（裝備視窗格）：從 player.eq 找實例
             return (player.inv || []).find(x => x.uid === uidv) || null;
         } catch(e){ return null; }
     }
@@ -1750,7 +1751,7 @@ window.onload = () => {
         let ic = document.getElementById('interaction-content');
         let eb = document.getElementById('equip-book');
         // 技能頁 host（data-tip-skill）與收集冊 host（data-tip-id）不限於 NPC 互動面板；其餘 host 仍限定於 interaction-content
-        let ok = host && ((ic && ic.contains(host)) || (eb && !eb.classList.contains('hidden') && eb.contains(host)) || host.hasAttribute('data-tip-skill') || host.hasAttribute('data-tip-id'));
+        let ok = host && ((ic && ic.contains(host)) || (eb && !eb.classList.contains('hidden') && eb.contains(host)) || host.hasAttribute('data-tip-skill') || host.hasAttribute('data-tip-id') || host.hasAttribute('data-tip-uid'));   // 🖱️ data-tip-uid（背包/裝備欄實例物品）不限面板，任何處 hover 即顯示完整資訊 tooltip
         if(!ok){ hideTip(); return; }
         let el = getTip();
         let tSkill = host.getAttribute('data-tip-skill');

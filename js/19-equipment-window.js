@@ -208,9 +208,8 @@
                     badge.textContent = '+' + item.en;
                     slot.appendChild(badge);
                 }
-                const fullName = document.createElement('span');
-                fullName.innerHTML = getItemFullName(item);
-                slot.title = fullName.textContent || fullName.innerText || data.n || item.id;
+                slot.classList.add('tip-host');
+                slot.setAttribute('data-tip-uid', item.uid); slot.setAttribute('data-tip-src', 'eq');   // 🖱️ hover 即時顯示已裝備物品完整資訊 tooltip
                 slot.onclick = function () {
                     clearTimeout(clickTimer);
                     clickTimer = setTimeout(function () {
@@ -261,8 +260,8 @@
             const d = DB.items[item.id];
             const row = document.createElement('button');
             row.type = 'button';
-            row.className = 'equipment-side-item' + (checkCanEquip(item) ? '' : ' cannot-equip');
-            row.title = plainItemName(item);
+            row.className = 'equipment-side-item tip-host' + (checkCanEquip(item) ? '' : ' cannot-equip');
+            row.setAttribute('data-tip-uid', item.uid); row.setAttribute('data-tip-src', 'inv');   // 🖱️ hover 即時顯示完整資訊 tooltip
             const icon = document.createElement('img');
             icon.src = getIconUrl(d);
             icon.alt = '';
