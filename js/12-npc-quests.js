@@ -764,7 +764,7 @@ const TRIAL_Q = {
     mage45:     { cls:'mage',     lv:45, npc:'塔拉斯',       reqs:[['new_item_240',1]], rewards:['wpn_manawand','arm_89'] },
     elf15:      { cls:'elf',      lv:15, npc:'歐斯',         reqs:[['new_item_199',1],['new_item_200',1],['new_item_201',1],['new_item_202',1]], rewards:['arm_50','arm_51'] },
     elf30:      { cls:'elf',      lv:30, npc:'迷幻森林之母', reqs:[['new_item_213',1]], rewards:['bk_elf_summon','arm_85'] },
-    elf45:      { cls:'elf',      lv:45, npc:'馬沙',         reqs:[['item_blueflute',1],['item_ancientkey',1]], rewards:['acc_guardian','bk_elf_wisdom'] },
+    elf45:      { cls:'elf',      lv:45, npc:'馬沙',         reqs:[['item_blueflute',1],['item_ancientkey',1]], rewards:['arm_102','bk_elf_summon2'] },   // 🔧 v3.1.23 修：原 acc_guardian/bk_elf_wisdom 從未定義→整個馬沙介面崩潰。還原參考版正確獎勵＝保護者手套(arm_102)＋精靈水晶(召喚強力屬性精靈)(bk_elf_summon2)
     dark15:     { cls:'dark',     lv:15, npc:'倫得',         reqs:[['item_death_oath',1]], rewards:['arm_shadowglove'] },
     dark30:     { cls:'dark',     lv:30, npc:'康',           reqs:[['item_orc_elder_head',1]], rewards:['arm_shadowmask'] },
     dark45:     { cls:'dark',     lv:45, npc:'布魯迪卡',     reqs:[['item_yeti_head',1]], rewards:['arm_shadowboots'] },
