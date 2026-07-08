@@ -1,6 +1,6 @@
 /** 遊戲核心資料庫 */
 // 🏷️ 遊戲版本號（顯示於登入頁面下方·單一真相來源）：更新版本時只改這一行，登入頁面自動同步。
-const GAME_VERSION = 'v3.1.9';
+const GAME_VERSION = 'v3.1.13';
 // ===== 💾 存檔壓縮（LZString compressToUTF16/decompressFromUTF16·MIT, Pieroxy）：localStorage 內部以 UTF-16 壓縮，省 ~89%，繞過 5MB 上限 =====
 //  ⚠️ 只壓 localStorage（存檔位/倉庫/共用桶/_bak）；匯出檔維持明文 JSON（可攜·importSave 用 JSON.parse 驗證）。_lzGet 相容舊明文存檔（無 'LZ1:' 前綴→原樣回傳）。
 var LZString = (function () {
@@ -2045,7 +2045,8 @@ const DB = {
                 { id: "npc_hector", n: "海克特", title: "製作", type: "craft", d: "爐火終年不熄的鋼鐵鍛造師，他的鎚聲就是品質的保證。為顧客製造鋼鐵道具。" },
                 { id: "npc_herbert", n: "哈巴特", title: "製作", type: "craft", d: "手藝精湛的裁縫師，一針一線都縫進了對穿戴者的庇護。可以為人們縫製布料防具。" },
                 { id: "npc_lentis", n: "倫提斯", title: "製作", type: "craft", d: "擅長將軍團之力封入金屬的戒指匠師。以軍團印記與軍王徽印打造四屬性的精靈戒指。" },
-                { id: "npc_sebas", n: "賽巴斯", title: "寶石加工", type: "craft", d: "奇岩寶石加工坊的巨匠賽巴斯，能將稀世寶石與龍鱗鍛入飾品。製作四屬性戒指與四精靈皮帶。" }
+                { id: "npc_sebas", n: "賽巴斯", title: "寶石加工", type: "craft", d: "奇岩寶石加工坊的巨匠賽巴斯，能將稀世寶石與龍鱗鍛入飾品。製作四屬性戒指與四精靈皮帶。" },
+                { id: "npc_wh_giran", n: "蘇瑞耳", title: "倉庫", type: "warehouse", d: "蘇瑞耳看守著奇岩繁忙商街旁的庫房，替你妥善存放物品與金幣，四個存檔角色共用。" }
             ]
         },
         "town_heine": {
@@ -2111,7 +2112,8 @@ const DB = {
                 { id: "npc_han", n: "漢", title: "精通", type: "mastery", classicHide: true, d: "威頓村的傳奇人物漢，早已超越凡人的極限。等級 50 以上的強者，可在此接受超越自我的精通任務。" },   // 🏅
                 { id: "npc_keluya", n: "客盧亞", title: "製作", type: "craft", d: "客盧亞傳承著上古鍛造的失落技藝。以古代材料打造古代臂甲與傳說武器（古代神之槍／古代神之斧）。" },
                 { id: "npc_zeus_golem", n: "宙斯之熔岩高崙", title: "製作", type: "craft", d: "由熔岩鑄成的宙斯之熔岩高崙，爐心燃著遠古之火，專為戰士鍛兵。以惡魔斧頭與黑色米索莉金屬板為戰士鍛造「魔物的斧頭」。" },
-                { id: "npc_doll_merchant", n: "魔法娃娃商人", title: "卡片合成", type: "synth", d: "蒐羅怪物卡片的魔法娃娃商人。能將你身上重複的卡片合成為更高階的卡片——10 張同名普卡換 1 張銀卡，10 張同名銀卡換 1 張金卡。" }
+                { id: "npc_doll_merchant", n: "魔法娃娃商人", title: "卡片合成", type: "synth", d: "蒐羅怪物卡片的魔法娃娃商人。能將你身上重複的卡片合成為更高階的卡片——10 張同名普卡換 1 張銀卡，10 張同名銀卡換 1 張金卡。" },
+                { id: "npc_wh_witon", n: "艾斯倫", title: "倉庫", type: "warehouse", d: "艾斯倫在威頓村的庫房裡替旅人看管行囊，存放物品與金幣，四個存檔角色共用。" }
             ]
         },
         "town_sherine": {   // 🔮 新安全區：席琳神殿

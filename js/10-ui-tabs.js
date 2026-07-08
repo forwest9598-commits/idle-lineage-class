@@ -224,7 +224,8 @@ function renderTabs(force) {
             // 👇 判斷如果裝備本身是祝福的，或者物品基底(卷軸)是祝福的，就套用螢光特效
             let glowClass = getGlowClass(eq, d);
             let imgHtml = `<img src="${imgUrl}" onerror="this.style.opacity='0';" class="object-contain pointer-events-none ${glowClass}">`;
-            el.title = `${s.n}：${plainInventoryItemName(eq)}`;
+            el.classList.add('tip-host');
+            el.setAttribute('data-tip-uid', eq.uid); el.setAttribute('data-tip-src', 'eq');   // 🖱️ 裝備欄 hover 即時顯示完整資訊 tooltip（同背包/裝備視窗·取代原生 title 慢速）
             if (eq.lock) el.classList.add('classic-item-locked');
             el.innerHTML = `<div class="classic-icon-box">${imgHtml}</div><div class="classic-name-box"><span class="classic-slot-name">${s.n}</span><span class="${getItemColor(eq)} font-bold">${getItemFullName(eq)}</span></div>${eq.lock ? '<span class="classic-item-lock-badge" aria-hidden="true">🔒</span>' : ''}`;
             el.onclick = () => openModal(eq, true, s.k);
