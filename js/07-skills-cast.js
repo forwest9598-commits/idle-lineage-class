@@ -534,6 +534,7 @@ function castSkillInner(skId) {
                 if(!res.hit) { hitsLog.push('Miss'); continue; }
                 landed++;
                 if(sk.skillAddDmg) res.dmg = Math.max(1, res.dmg + sk.skillAddDmg);   // ⚔️ 衝擊之暈：一般攻擊傷害 +10
+                if(skId === 'sk_elf_triple' && wpn && wpn.fullHpMultTriple && t.curHp === t.hp) res.dmg = Math.max(1, Math.floor(res.dmg * wpn.fullHpMultTriple));   // 🏺 遺忘者的狙擊弓：三重矢對滿血敵人傷害 ×2（僅第一箭·命中後 curHp 已降·gate skId 避免衝擊之暈共用此迴圈時誤觸）
                 // 🔮 紅獅 5/5 已於 getPhysicalDmg 內套用（避免重複），此處不再乘
                 // 遠距離物理技能命中滿血被動怪物，賦予 3 秒延遲（整段只觸發一次）
                 if(!delayDone && t.curHp === t.hp && t.beh === '被動' && res.ranged) { t._delayTicks = 30; delayDone = true; }

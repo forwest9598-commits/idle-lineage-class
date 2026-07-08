@@ -623,7 +623,11 @@ const WEAPON_TAGS = {
     // 🏺 遺物 第六批（v3.1.13）：幽光=單手劍+武士刀(反擊+居合)、喚獸鞭=單手鈍器(鈍擊)、獅鷲爪=鋼爪(雙擊)、鱷魚牙=雙手劍(切割靠 eff)、冰石鎚=雙手鈍器(重擊)；殘冰死亡氣息(魔杖·isWand)靠旗標自判免 tag
     relic_wisp_remnant:['單手劍','武士刀'], relic_summoner_whip:['單手鈍器'], relic_griffin_claw:['鋼爪'], relic_croc_fang:['雙手劍'], relic_icestone_maul:['雙手鈍器'],
     // 🏺 遺物 第七批（v3.1.18）：蛇女鱗片/刺針=匕首(出血)、牙籤/重型劍=雙手劍(切割靠 eff)、拋投石=雙手鈍器(重擊)、備用刀=雙刀(雙擊)；眼魔凝視(魔杖·isWand)＋雞蛇凝視(鎖鏈劍·chainsword)靠旗標自判免 tag
-    relic_mutant_lamia_scale:['匕首'], relic_thorn_needle:['匕首'], relic_giant_toothpick:['雙手劍'], relic_veteran_greatsword:['雙手劍'], relic_giant_throwstone:['雙手鈍器'], relic_armor_spareblade:['雙刀']
+    relic_mutant_lamia_scale:['匕首'], relic_thorn_needle:['匕首'], relic_giant_toothpick:['雙手劍'], relic_veteran_greatsword:['雙手劍'], relic_giant_throwstone:['雙手鈍器'], relic_armor_spareblade:['雙刀'],
+    relic_aruba_haste:['單手鈍器'], relic_ashwarrior_flamesword:['單手劍'], relic_deadgeneral_greatsword:['雙手劍'], relic_darkscorpion_pincers:['雙刀'],
+    relic_medusa_stinger:['單手鈍器'], relic_silent_venom:['矛'],
+    // 🏺 遺物 第十一批（v3.1.33）：牛頭怪的殘暴巨斧＝雙手鈍器（eff:crush 重擊＋tag 自動貫穿）
+    relic_axetaurus_brutalaxe:['雙手鈍器']
 };
 function getWeaponTags(id){ return WEAPON_TAGS[id] || []; }
 // ⚔️ 雙擊機率 comboRate：未明定者依武器標籤套預設（鋼爪 33% / 雙刀 25%）；個別武器可在 def 寫 comboRate 覆寫（底比斯歐西里斯雙刀30 / 死亡之指20 / 恨之鋼爪50 / 破壞雙刀·破壞鋼爪30）。日後新增 combo 武器自動取得預設機率。
@@ -680,7 +684,6 @@ function buildItemDescHTML(item) {
             // 🏛️ 天堂職業速度：硬直（被擊延遲攻擊）＋施法冷卻下限（皆隨職業·不隨此武器）
             if (typeof hitstunTicks === 'function') desc += `<br><span class="text-slate-400 text-xs">硬直 ${(hitstunTicks(player)/10).toFixed(1)}秒 · 施法冷卻下限 ${(castLockTicks(player)/10).toFixed(1)}秒</span>`;
         }
-        if((item.en || 0) >= 1) desc += `<br><span class="text-amber-300">強化最終傷害 ×${enhanceWpnFinalMult(item.en, d).toFixed(2)}</span>`;   // 🔧 武器強化最終傷害倍率（+1 起·依潘朵拉權重分級·最高 ×1.02~×2.50）
 
         // 瑪那魔杖等「命中恢復MP」武器：依此物品的強化等級(+N)動態顯示恢復量
         if(d.eff === 'mp_drain' || d.mpOnHit) {

@@ -871,6 +871,14 @@ function vfxPlayerHit(dmg) {
         if (bar) { bar.classList.remove('vfx-hurt'); void bar.offsetWidth; bar.classList.add('vfx-hurt'); bar.addEventListener('animationend', () => bar.classList.remove('vfx-hurt'), { once: true }); }
     } catch (e) {}
 }
+// 🗡️ 怪物施法震動（死亡騎士施法時整個戰場輕微震動·cosmetic-only·吃 __vfxOff·重用 vfx-shake 動畫）
+function vfxCastShake() {
+    try {
+        if (window.__vfxOff) return;
+        let bv = document.getElementById('battle-view');
+        if (bv) { bv.classList.remove('vfx-shake'); void bv.offsetWidth; bv.classList.add('vfx-shake'); bv.addEventListener('animationend', () => bv.classList.remove('vfx-shake'), { once: true }); }
+    } catch (e) {}
+}
 
 // 🎚️ 戰鬥特效開關（僅標題畫面提供；遊戲中不再出現）：玩家選擇持久化於 localStorage，載入時套用到 window.__vfxOff
 const _VFX_PREF_KEY = 'lineage_vfx_off';
@@ -915,6 +923,7 @@ if (typeof castSkill === 'function' && !castSkill._vfxWrapped) {
     castSkill = function (skId) {
         let sk = DB.skills[skId];
         let _pele = (sk && sk.ele && sk.ele !== 'none' && !sk.weaponDmg && !sk.throwAxe) ? sk.ele : (sk ? _VFX_PROJECTILE_SKILLS[skId] : null);   // 屬性攻擊魔法 ＋ 白名單投射技能(光箭/究極光裂/心靈破壞/三重矢/戰斧投擲)
+        if (_pele && sk && typeof SPELL_FX !== 'undefined' && SPELL_FX[sk.n]) _pele = null;   // 🎯 v3.1.29 有「動態圖投射物」(proj·光箭/冰箭/火箭)→免 CSS 投射；v3.1.31 放寬（用戶：究極光裂術有動態動畫也不用）＝技能只要有註冊任何 SPELL_FX 動態特效（含目標身上型 h/w）就不播 CSS 投射·只有「完全沒有動態特效」的技能保留 CSS 投射視覺
         let proj = !window.__vfxOff && !!_pele;
         let before = null;
         if (proj) { before = mapState.mobs.map(m => (m && !m._dead) ? { uid: m.uid, hp: m.curHp, rect: _vfxSlotRect(m.uid) } : null); }

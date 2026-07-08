@@ -47,7 +47,7 @@ function playerAttack() {
 
         if (wpn && (wpn.eff === 'mp_drain' || wpn.mpOnHit)) {   // 🔧 mpOnHit：eff 已被其他特效(如惡魔王魔杖魔爆)佔用仍可保留命中回MP
             let en = capWpnEn((player.eq.wpn && player.eq.wpn.en) || 0);
-            let mpGain = 1 + Math.max(0, en - 6);   // +0~+6：恢復1MP；之後每+1多恢復1（+7:2、+8:3…）
+            let mpGain = (wpn.mpOnHitAmt != null) ? wpn.mpOnHitAmt : (1 + Math.max(0, en - 6));   // 🏺 遺物 邪惡蜥蜴的眼瞳：mpOnHitAmt 固定恢復量（!= null 判定·0 也算有效覆寫）；否則 +0~+6 恢復1MP、之後每+1多恢復1（+7:2、+8:3…）
             player.mp = Math.min(player.mmp, player.mp + mpGain); updateUI();
         }
 		if (wpn && wpn.eff === 'dice_death') {
@@ -66,6 +66,7 @@ function playerAttack() {
         }
         // 🏺 遺物 隱蔽的死亡草葉：一般攻擊命中「滿血」非BOSS怪，instakillFull 機率即死（斗篷授予·此處 target.curHp 為命中前值）
         if (player.d.instakillFull && target.curHp === target.hp && tryInstakill(target, { p: player.d.instakillFull, tag: null }, '隱蔽的死亡草葉', mapState.targetIdx)) return;
+        if (wpn && wpn.stoneInstakill && target.st && target.st.stone > 0 && tryInstakill(target, { p: 1, tag: null }, '蛇妖的無慈悲尾刺', mapState.targetIdx)) return;   // 🏺 蛇妖的無慈悲尾刺：命中石化敵人必定即死（tryInstakill 內建頭目免疫）
         // === 騎士被動：看破 / 殺戮 / 屠殺（僅對近距離普攻生效，兩者獨立判定，可同時觸發）===
         let killPrefix = '';
         if (player.cls === 'knight' && !result.ranged && !player.classicMode) {   // 🎮 經典模式：騎士無看破/殺戮被動
@@ -109,6 +110,9 @@ function playerAttack() {
         if (player.skills.includes('sk_warrior_berserk') && !result.ranged && Math.random() < 0.05) result.dmg *= 2;   // ⚔️ 狂暴：一般攻擊5%機率傷害x2
         if (player.buffs.sk_royal_bravewill > 0 && Math.random() < (player.mastery === 'k_royal_sword' ? 0.2 : 0.1)) result.dmg = Math.max(1, Math.floor(result.dmg * 1.5));   // 👑 勇猛意志：10%(🏅劍術精通20%)機率一般攻擊傷害×1.5
         if (wpn && wpn.hardSkinMult && _mainHardSkin > 0) result.dmg = Math.max(1, Math.floor(result.dmg * wpn.hardSkinMult));   // 🦀 巨大鱷魚的狩獵牙：目標有硬皮值時一般攻擊傷害 ×1.5（貫穿故傷害未被硬皮扣減）
+        if (wpn && wpn.softMult && _mainHardSkin <= 0) result.dmg = Math.max(1, Math.floor(result.dmg * wpn.softMult));   // 🏺 不死將軍的珍愛巨劍：一般攻擊對「沒有硬皮值」的敵人傷害 ×1.3
+        if (wpn && wpn.fullHpMult && target.curHp === target.hp) result.dmg = Math.max(1, Math.floor(result.dmg * wpn.fullHpMult));   // 🏺 遺忘者的狙擊弓：一般攻擊對滿血敵人傷害 ×3（傷害尚未扣、target.curHp 仍為滿血）
+        if (wpn && wpn.silencedBonusDmg && target.st && target.st.magicseal > 0) result.dmg += wpn.silencedBonusDmg;   // 🏺 沉默的毒液：對「沉默(magicseal)」狀態敵人額外固定傷害 +20
         if (wpn && wpn.raceBonus && target.race === wpn.raceBonus.race) result.dmg = Math.max(1, Math.floor(result.dmg * (wpn.raceBonus.mult || 1)));   // 🕷️ 刺針：一般攻擊對特定種族（蜘蛛）造成傷害 ×N
         target.curHp -= result.dmg;
         if (result.dmg > 0) { try { playMobHurt(target); } catch(e){} }   // 🔊 音效：怪物受傷（依怪名對應；全域節流）
@@ -118,7 +122,7 @@ function playerAttack() {
         if (player.buffs && player.buffs.sk_dark_poison > 0 && target.curHp > 0 && Math.random() < (hasMastery('d_poison') ? 1 : 0.5)) {
             if (!target.st) target.st = newMobStatus();
             let _pPct = hasMastery('d_poison') ? 2.0 : 0.6;   // 🔧 劇毒精通：每秒 200%；否則 60%
-            let _pUnit = Math.max(1, Math.floor(result.dmg * _pPct));
+            let _pUnit = Math.max(1, Math.floor(result.dmg * _pPct * ((wpn && wpn.poisonMult) || 1)));   // 🏺 暗黑蠍的雙鉗：poisonMult 放大觸發的附加劇毒傷害（×1.2）
             // 🔧 新規則：未中毒、或新傷害「高於」現有時才上毒（取代傷害並刷新5秒）；新傷害未更高則完全不更新，須等舊毒5秒跑完、敵人脫離中毒後才能再上毒
             if ((target.st.poison || 0) <= 0 || _pUnit > (target.st.poisonUnit || 0)) {
                 target.st.poison = 50; target.st.poisonTick = 10;   // 持續 5 秒、每秒一次
@@ -207,7 +211,7 @@ function playerAttack() {
         // 🔧 蕾雅魔杖：近距離一般攻擊命中觸發冰裂術
         if (!result.ranged && target.curHp > 0 && wpn && wpn.meleeHitSpell) laiaWandHitProc(target);
         // 🏺 遺物 命中附加固定屬性傷害（幽光的殘念 30火／冰石的強襲鎚 10水·不受魔抗/防禦影響）
-        if (target.curHp > 0 && wpn && wpn.onHitEleDmg) { let _oh = wpn.onHitEleDmg; target.curHp -= _oh.dmg; target.justHit = _oh.ele; mobWake(target); logCombat(`<span class="font-bold" style="color:${RELIC_ELE_COLOR[_oh.ele] || '#e2e8f0'};">附加 ${_oh.dmg} 點${RELIC_ELE_LABEL[_oh.ele] || ''}屬性傷害。</span>`, 'player-special'); }
+        if (target.curHp > 0 && wpn && wpn.onHitEleDmg && (!wpn.onHitEleDmg.rate || Math.random() * 100 < wpn.onHitEleDmg.rate)) { let _oh = wpn.onHitEleDmg; target.curHp -= _oh.dmg; target.justHit = _oh.ele; mobWake(target); logCombat(`<span class="font-bold" style="color:${RELIC_ELE_COLOR[_oh.ele] || '#e2e8f0'};">附加 ${_oh.dmg} 點${RELIC_ELE_LABEL[_oh.ele] || ''}屬性傷害。</span>`, 'player-special'); }   // 🏺 rate：灰燼戰士的火焰長劍 3% 機率；無 rate→必定（幽光/冰石鎚）
         // 🏺 遺物 弱點洞察（巨大螞蟻的複眼）：以剋制目標屬性的武器屬性命中→額外固定傷害
         if (target.curHp > 0) { let _whb = _relicWeakHitBonus(player); if (_whb > 0) { let _we = getWpnEle(player.eq.wpn, wpn); if (_we && _we !== 'none' && elementCounterMult(_we, target.e) > 1) { target.curHp -= _whb; target.justHit = _we; mobWake(target); logCombat(`<span class="font-bold text-amber-300">【弱點洞察】</span>擊中屬性弱點，額外造成 ${_whb} 點傷害。`, 'player-special'); } } }
         if (target.curHp <= 0) killMob(mapState.targetIdx);
@@ -1045,6 +1049,8 @@ function killPlayer() {
 function castMobMagic(mob, sk) {
     if (!sk) return;
     if (mob && mob.curHp > 0 && typeof _mobAnimTrigger === 'function') _mobAnimTrigger(mob, 'skill');   // 🎞️ 序列幀：技能動作（🔒 鎖定·強制放完·播放中的新觸發被忽略）
+    if (mob && mob.curHp > 0) { try { if (typeof playMobSkill === 'function') playMobSkill(mob); } catch (e) {} }   // 🔊 怪物技能(施法)音（查 MOB_SKILL_SFX·查無/缺檔靜音·冰之女王 3564）
+    if (mob && mob.curHp > 0 && mob.n === '死亡騎士') { try { if (typeof vfxCastShake === 'function') vfxCastShake(); } catch (e) {} }   // ✨ 死亡騎士施法→整個戰場震動（cosmetic·吃 __vfxOff）
     let redirectable = !!sk.dmg || ['stone', 'paralyze', 'silence', 'magicseal', 'freeze', 'scald', 'stun', 'slowatk', 'poison', 'burn'].includes(sk.type);
     if (!redirectable) { applyMobMagic(mob, sk); return; }
     let allies = (player.allies || []).filter(a => a && !a._downed && (a.curHp || 0) > 0);

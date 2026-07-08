@@ -167,10 +167,18 @@ function tick() {
     if(player.statuses.poison > 0 && state.ticks % player.statuses.poisonTick === 0 && !inAbsBarrier()) {
         let _pdmg = player.statuses.poisonDmg;
         if (player.buffs && player.buffs.sk_dark_poisonres > 0) _pdmg = Math.max(1, Math.floor(_pdmg / 2));   // 🔧 毒性抵抗：中毒傷害減半
-        player.hp -= _pdmg;
-        logCombat(`你受到劇毒傷害 ${_pdmg} 點。`, 'enemy');
-        if(player.hp <= 0) { killPlayer(); return; }
-        updateUI();
+        if (player.d && player.d.poisonHealMult > 0) {
+            // 🏺 遺物 毒液化身：受到毒性 DoT 時恢復所受傷害×倍率的 HP（先受傷再治癒·淨效果為回血·倍率>1 不可能致死）
+            let _pheal = Math.max(1, Math.floor(_pdmg * player.d.poisonHealMult));
+            player.hp = Math.min(player.mhp, player.hp - _pdmg + _pheal);
+            logCombat(`毒液化身汲取毒素：受到劇毒傷害 ${_pdmg} 點，恢復 ${_pheal} 點HP。`, 'player');
+            updateUI();
+        } else {
+            player.hp -= _pdmg;
+            logCombat(`你受到劇毒傷害 ${_pdmg} 點。`, 'enemy');
+            if(player.hp <= 0) { killPlayer(); return; }
+            updateUI();
+        }
     }
     if(player.statuses.burn > 0 && state.ticks % player.statuses.burnTick === 0 && !inAbsBarrier()) {
         player.hp -= player.statuses.burnDmg;
@@ -884,9 +892,8 @@ function getPhysicalDmg(diceStr, target, wpn, arrowData, forceHeavy, forceHit, f
     if (graze) _outDmg = Math.max(1, Math.floor(_outDmg * 0.5));   // 擦傷：最終傷害剩 50%
     _outDmg = Math.max(1, Math.floor(_outDmg * fragileMult(target)));   // 🔮 脆弱（白鳥5）：受所有來源傷害 +20%
     _outDmg = Math.max(1, Math.floor(_outDmg * wpnEnFinalMult(wpnInst || player.eq.wpn)));   // 🔧 武器強化最終傷害倍率；🛡️ v2.6.69 審計#14：有傳 wpnInst（如迅猛雙斧副手揮擊傳 offwpn）就用「該武器自身」的強化與分級，不再硬吃主手倍率
-    if (_cw && _cw.finalMult) _outDmg = Math.max(1, Math.floor(_outDmg * _cw.finalMult));   // 🏛️ 武器最終傷害倍率（古老武器 ×2）
     _outDmg = Math.max(1, Math.floor(_outDmg * rlFuryMult()));   // 🔮 紅獅5/5(×1.2)＋😡狂怒5/5：最終傷害（普攻及所有走本函式的物理攻擊：反擊/居合/看破/連擊/連射/穿透/魔擊/物理技能）
-    _outDmg = Math.max(1, Math.floor(_outDmg * elementCounterMult(_wAff && _wAff.ele, target.e)));   // ⚔️ 屬性剋制：武器屬性詞綴剋怪 ×1.4、被剋 ×0.6（無屬性詞綴→×1）
+    _outDmg = Math.max(1, Math.floor(_outDmg * elementCounterMult(_wAff ? _wAff.ele : getWpnEle(null, DB.items[_swingId]), target.e)));   // ⚔️ 屬性剋制：屬性詞綴優先，否則取揮擊武器基底 ele（「一般攻擊轉為X屬性」遺物·與傭兵路徑 js/06 getWpnEle 對齊·v3.1.33 稽核修）剋怪 ×1.4、被剋 ×0.6（無屬性→×1）
     if (heavy && player.mastery === 'k_cleave' && _cw && _cw.eff === 'cleave') _outDmg = Math.max(1, Math.floor(_outDmg * 1.5));   // 🏅 切割精通：觸發重擊時傷害 ×1.5
     let _dualX2 = false;   // ⚔️ 雙刀內建特性：一般攻擊命中(非擦傷) 5% 機率最終傷害×2（🎮 經典模式停用）
     if (_natRoll && !graze && !player.classicMode && getWeaponTags(_swingId).includes('雙刀') && Math.random() < 0.05) { _dualX2 = true; _outDmg = Math.max(1, _outDmg * 2); }
@@ -935,7 +942,7 @@ function consumeArrow() {
 }
 
 // ===== 法杖共鳴：裝備指定魔法杖時，一般攻擊(不論命中與否)有 智力/60 機率免費施展光箭 =====
-const WAND_LIGHTARROW_IDS = ['wpn_oakwand', 'wpn_38', 'wpn_witchwand', 'wpn_manawand', 'wpn_crystalwand', 'wpn_baless', 'wpn_wand_rasta', 'wpn_red_crystalwand', 'wpn_laia_wand', 'wpn_icequeen_wand', 'wpn_demon_scythe', 'wpn_darkmage_wand', 'wpn_baphomet_wand', 'wpn_illu_wand', 'wpn_demon_wand_hidden', 'wpn_dark_crystalball', 'relic_amp_staff', 'relic_elder_thunder', 'relic_cerberus_wand'];   // 🏺 遺物 安普長老的拐杖／長老的雷電能量／三頭犬魔杖亦共鳴 // 🔮 幻術士魔杖：共鳴（👹 隱藏的魔族魔杖亦共鳴；🏴‍☠️ 漆黑水晶球亦共鳴）   // 🏅 共鳴：含蕾雅魔杖／冰之女王魔杖／惡魔鐮刀／黑法師之杖／🔧巴風特魔杖（👑惡魔王魔杖已改為魔爆 eff:magicburst）
+const WAND_LIGHTARROW_IDS = ['wpn_oakwand', 'wpn_38', 'wpn_witchwand', 'wpn_manawand', 'wpn_crystalwand', 'wpn_baless', 'wpn_wand_rasta', 'wpn_red_crystalwand', 'wpn_laia_wand', 'wpn_icequeen_wand', 'wpn_demon_scythe', 'wpn_darkmage_wand', 'wpn_baphomet_wand', 'wpn_illu_wand', 'wpn_demon_wand_hidden', 'wpn_dark_crystalball', 'relic_amp_staff', 'relic_elder_thunder', 'relic_cerberus_wand', 'relic_evillizard_eye'];   // 🏺 遺物 安普長老的拐杖／長老的雷電能量／三頭犬魔杖／邪惡蜥蜴的眼瞳亦共鳴 // 🔮 幻術士魔杖：共鳴（👹 隱藏的魔族魔杖亦共鳴；🏴‍☠️ 漆黑水晶球亦共鳴）   // 🏅 共鳴：含蕾雅魔杖／冰之女王魔杖／惡魔鐮刀／黑法師之杖／🔧巴風特魔杖（👑惡魔王魔杖已改為魔爆 eff:magicburst）
 function wandLightArrowProc(target) {
     if (player.classicMode) return;   // 🎮 經典模式：停用共鳴
     let wpn = player.eq.wpn;
@@ -1417,9 +1424,9 @@ function qiguPlayerAttack(target, wpn) {
     qiguWeaponProc(target, wpn);        // 奇古獸特效（幻影衝擊/心靈破壞；主擊已擊殺則內部 guard 跳過、自行處理擊殺）
     wandLightArrowProc(target);         // 🔮 共鳴（幻術士魔杖在 WAND_LIGHTARROW_IDS；非共鳴武器內部 no-op，主目標已死自動轉移）
     // 🔮 魔劍精通可裝備一般武器：補齊一般武器命中特效（與傭兵 allyQiguAttack/allyWeaponProcs 一致；各函式/分支自帶武器判定，非對應武器即 no-op）
-    if (wpn.eff === 'mp_drain' || wpn.mpOnHit) {   // 命中恢復 MP（瑪那魔杖等）
+    if (wpn.eff === 'mp_drain' || wpn.mpOnHit) {   // 命中恢復 MP（瑪那魔杖等；mpOnHitAmt 固定量優先·邪惡蜥蜴的眼瞳 +6·v3.1.33 稽核修）
         let _en = capWpnEn((player.eq.wpn && player.eq.wpn.en) || 0);
-        player.mp = Math.min(player.mmp, player.mp + 1 + Math.max(0, _en - 6)); updateUI();
+        player.mp = Math.min(player.mmp, player.mp + ((wpn.mpOnHitAmt != null) ? wpn.mpOnHitAmt : (1 + Math.max(0, _en - 6)))); updateUI();
     }
     magicStrikeProc(target);            // 魔擊（力量魔法杖）
     weaponSpellProc(target);            // 附魔施放：spellProc/procSkill/procPoison/procStatusSkill（巴風特魔杖/冰之女王魔杖/死亡之指等）

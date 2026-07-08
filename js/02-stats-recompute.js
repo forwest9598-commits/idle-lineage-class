@@ -19,6 +19,7 @@ function recomputeStats() {
     d.thornsDmg = 0; d.instakillFull = 0; d.onDmgHeal = null; d.onDmgHealCd = 0; d.onDmgHealName = '';   // 🏺 遺物 第三批：受擊反傷固定值 / 命中滿血怪即死率 / 受擊自癒技能id（onDmgHealCd=冷卻秒數、onDmgHealName=來源名稱）
     d.hurtExplode = 0;   // 🏺 遺物 第四批 爆彈花蕊：受擊時對自己與全體敵人的火魔傷固定值
     d.moveSpeedPct = 0;  // 🏺 遺物 寄居蟹背殼：移動速度%（負=變慢→怪物重生變慢·js/03 重生延遲讀取·與加速buff相乘）
+    d.poisonHealMult = 0;   // 🏺 遺物 毒液化身：受到毒性 DoT 時恢復所受傷害×此倍率的 HP（js/03 中毒 tick 讀取·0=無）
     d.rangedDmg = 0; d.rangedHit = 0; d.rangedCrit = 0;
     d.extraDmg = 0; d.extraHit = 0; d.equipExtraAtk = 0;   // 🐉 d.equipExtraAtk：裝備授予的額外一般攻擊次數（龍鱗臂甲）
     d.magicDmg = 0; d.magicHit = 0; d.magicCrit = 0; d.extraMp = 0; d.mpReduce = 0;
@@ -204,6 +205,7 @@ function recomputeStats() {
 
     d.aspd = 1.0;
     d.hitstun = hitstunTicks(p);   // ⚔️ 天堂職業硬直（被直接命中→延遲下次攻擊的 tick·職業定·不隨武器）
+    d.hitstunReduce = 0;           // 🏺 不動的鋼鐵堅壁：裝備硬直減免累加器（於變身速度覆蓋「之後」統一扣除·見下方變身區塊後）
     d.castLock = castLockTicks(p); // 🔮 天堂職業施法冷卻下限（攻擊魔法自動施放間隔最小 tick·法師最快）
 
     // ===== Phase 3：非屬性加成（武器傷害 / 裝備防禦 / 套裝 / 增益 / 變身） =====
@@ -230,6 +232,7 @@ function recomputeStats() {
         if(w.mcrit) d.meleeCrit += w.mcrit;   // 🏺 武器近距離爆擊率加成（遺物 蟹人的巨鉗 +5%）
         if(w.mcritDmg) d.meleeCritDmg += w.mcritDmg;   // 🏺 武器近距離爆擊傷害% 加成（遺物 歐姆裝甲兵的超重鎚 +10%）
         if(w.rcrit) d.rangedCrit += w.rcrit;   // 🏺 武器遠距離爆擊率% 加成（遺物 神射手的重弦弓 +3%）
+        if(w.atkSpdPct) d.atkSpdPct += w.atkSpdPct;   // 🏺 武器攻速%（遺物 阿魯巴的加速棍棒 +20／牛頭怪的殘暴巨斧 +25；防具/飾品 atkSpdPct 走另一迴圈·武器需此處·v3.1.33 稽核修）
         let _wEn = capWpnEn(p.eq.wpn.en);   // 🔧 超過 +20 一律以 +20 計算所有隨強化提升的能力
         if(w.mpROverSafe && _wEn > (w.safe || 0)) d.mpR += (_wEn - (w.safe || 0)) * w.mpROverSafe;   // 突破安定值：每超過1階，MP自然恢復量 +mpROverSafe
         if(w.extraMpPerEn)  d.extraMp  += _wEn * w.extraMpPerEn;    // 每強化+1 → 額外魔法點數
@@ -300,6 +303,7 @@ d.mr += (baseMr + bonusMr);
         if(ed.immPoison) d.immPoison = true;                  // 潔尼斯戒指：免疫中毒/猛毒/麻痺
         if(ed.magicDrNonEle) d.magicDrNonEle += ed.magicDrNonEle; // 紅騎士盾牌：無屬性魔法減傷
         if(ed.dr) d.dr += ed.dr;   // 🛡️ 防具/飾品固定傷害減免（信念之盾 +2、巴風特盔甲 +2）
+        if(ed.hitstunReduce) d.hitstunReduce += ed.hitstunReduce;   // 🏺 不動的鋼鐵堅壁：受傷硬直 -0.5 秒（-5 tick）→先累加·於變身速度覆蓋後統一扣（v3.1.30 審查修：原本直接扣會被 POLY_TIERS 的 d.hitstun=pf.stun 蓋掉）
         if(ed.crushDr) d.crushDr += ed.crushDr;        // 🏺 遺物 妖魔的兜襠布：受到重擊時傷害減少 crushDr%（於 js/04 受擊路徑套用）
         if(ed.meleeHaste) d.meleeHaste += ed.meleeHaste;  // 🏺 遺物 狂野的鬃毛外套：裝備近距離武器時攻速 +meleeHaste%
         if(ed.atkSpdPct) d.atkSpdPct += ed.atkSpdPct;  // 🏺 遺物 綠色妖鬼的指甲：攻速 +atkSpdPct%（無條件）
@@ -308,6 +312,7 @@ d.mr += (baseMr + bonusMr);
         if(ed.onDmgHeal) { d.onDmgHeal = ed.onDmgHeal; d.onDmgHealCd = ed.onDmgHealCd || 5; d.onDmgHealName = ed.n; }   // 🏺 遺物 白螞蟻蛋殼(初級/5秒) / 孵育螞蟻精華(中級/8秒)：受擊自癒技能 id＋冷卻秒數＋來源名稱（cd 由 _shellHealCd 節流·僅單一副手槽→無疊加）
         if(ed.hurtExplode) d.hurtExplode += ed.hurtExplode;   // 🏺 遺物 爆彈花蕊：受擊爆裂火魔傷固定值
         if(ed.moveSpeedPct) d.moveSpeedPct += ed.moveSpeedPct;   // 🏺 遺物 寄居蟹背殼：移動速度%（影響怪物重生延遲）
+        if(ed.poisonHealMult) d.poisonHealMult = Math.max(d.poisonHealMult, ed.poisonHealMult);   // 🏺 遺物 毒液化身：毒性 DoT 轉治癒倍率（取最高·不疊加）
         // 🛡️ 臂甲（副手）：每強化+1 → HP+10；門檻特效（達 +5/+7/+9 套用對應階、取最高階、非累加）
         if(ed.armguard) {
             let _agEn = capEn(e.en, ed);
@@ -509,7 +514,8 @@ d.mr += (baseMr + bonusMr);
         d.mr        += (pf.mr  || 0);                                // MR
         if(pf.spd) spdMult *= (1 - pf.spd/100);                      // 攻速加快%（僅舊存檔的套裝變身可能還有 spd；新設定已改速度覆蓋不帶 spd）
     }
-    
+    if (d.hitstunReduce > 0) d.hitstun = Math.max(0, (d.hitstun || 0) - d.hitstunReduce);   // 🏺 不動的鋼鐵堅壁：硬直減免統一套用點（置於變身速度覆蓋後→變身形態的 pf.stun 也吃減免·夾下限 0）
+
     if(p.buffs.sk_soul_up > 0) { p.mhp = Math.floor(p.mhp * 1.2); p.mmp = Math.floor(p.mmp * 1.2); }
     if (player.skills.includes('sk_warrior_armorbody')) d.dr += Math.floor((10 - d.ac) / (hasMastery('k_tough') ? 5 : 10));   // ⚔️ 護甲身軀：傷害減免 +[(10-AC)/10]；🏅 堅韌精通改 /5
     if (p.buffs.sk_warrior_endurance > 0) p.mhp = Math.floor(p.mhp * (1 + (p.lv / 2) / 100));   // ⚔️ 體能強化：HP上限 +(等級/2)%
