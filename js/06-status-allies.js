@@ -196,14 +196,14 @@ function processMobStatusTick(m, i) {
 
 // ---------- 召喚物 ----------
 function summonTierByLevel(lv) {
-    // dmgDiv：近戰額外傷害 = floor((魅力/dmgDiv) x (1+等級/dmgLvDiv))；hitLvOff：命中的等級偏移；觸發技傷害 = (roll(dmgDice)+魅力) x floor(魅力/6)
-    if(lv >= 72) return { n:'召喚：黑豹', dmgDice:[2,14], dmgDiv:6, dmgLvDiv:10, interval:10, kind:'melee', hitLvOff:20, proc:{ p:0.20, cd:50, dmgDice:[6,10], ele:'none', name:'撕咬' } };
-    if(lv >= 64) return { n:'召喚：地獄束縛犬', dmgDice:[3,15], dmgDiv:4, dmgLvDiv:15, interval:20, kind:'melee', hitLvOff:15, proc:{ p:0.15, cd:50, dmgDice:[4,12], ele:'fire', name:'噴火' } };
-    if(lv >= 60) return { n:'召喚：地獄奴隸', dmgDice:[3,12], dmgDiv:4, dmgLvDiv:20, interval:20, kind:'melee', hitLvOff:12, proc:{ p:0.10, cd:50, dmgDice:[1,32], ele:'earth', name:'地獄之牙' } };
-    if(lv >= 52) return { n:'召喚：魔狼', dmgDice:[1,15], dmgDiv:5, dmgLvDiv:25, interval:10, kind:'melee', hitLvOff:10 };   // 🔧 攻速低於2秒的召喚物：固定加成貼近前階（dmgDiv 8→5，Lv52/魅30 加成 11→18，對照食人妖精 20）
-    if(lv >= 40) return { n:'召喚：食人妖精', dmgDice:[2,11], dmgDiv:4, dmgLvDiv:30, interval:20, kind:'melee', hitLvOff:7 };
-    if(lv >= 32) return { n:'召喚：甘地妖魔', dmgDice:[2,8], dmgDiv:5, dmgLvDiv:35, interval:20, kind:'melee', hitLvOff:3 };
-    return { n:'召喚：哈柏哥布林', dmgDice:[1,15], dmgDiv:5, dmgLvDiv:40, interval:20, kind:'melee', hitLvOff:0 };
+    // dmgMult：階級最終傷害倍率；hardSkinPen：忽略硬皮比例；高階觸發技改為固定間隔，避免長時間不發動或魅力多段造成爆量傷害。
+    if(lv >= 72) return { n:'召喚：黑豹', dmgDice:[2,14], dmgDiv:6, dmgLvDiv:10, dmgMult:1.28, hardSkinPen:0.75, interval:10, kind:'melee', hitLvOff:20, proc:{ p:1, cd:80, dmgDice:[6,10], ele:'none', name:'撕咬' } };
+    if(lv >= 64) return { n:'召喚：地獄束縛犬', dmgDice:[3,15], dmgDiv:4, dmgLvDiv:15, dmgMult:1.22, hardSkinPen:0.50, interval:20, kind:'melee', hitLvOff:15, proc:{ p:1, cd:100, dmgDice:[4,12], ele:'fire', name:'噴火' } };
+    if(lv >= 60) return { n:'召喚：地獄奴隸', dmgDice:[3,12], dmgDiv:4, dmgLvDiv:20, dmgMult:1.18, hardSkinPen:0.50, interval:20, kind:'melee', hitLvOff:12, proc:{ p:1, cd:120, dmgDice:[1,32], ele:'earth', name:'地獄之牙' } };
+    if(lv >= 52) return { n:'召喚：魔狼', dmgDice:[1,15], dmgDiv:5, dmgLvDiv:25, dmgMult:1.12, hardSkinPen:0.25, interval:10, kind:'melee', hitLvOff:10 };
+    if(lv >= 40) return { n:'召喚：食人妖精', dmgDice:[2,11], dmgDiv:4, dmgLvDiv:30, dmgMult:1.08, interval:20, kind:'melee', hitLvOff:7 };
+    if(lv >= 32) return { n:'召喚：甘地妖魔', dmgDice:[2,8], dmgDiv:5, dmgLvDiv:35, dmgMult:1.00, interval:20, kind:'melee', hitLvOff:3 };
+    return { n:'召喚：哈柏哥布林', dmgDice:[1,15], dmgDiv:5, dmgLvDiv:40, dmgMult:0.90, interval:20, kind:'melee', hitLvOff:0 };
 }
 function buildSummon(skId, def, durSec, owner) {
     owner = owner || player;   // 🩸 v2.6.25 owner 參數化：分階依 owner.lv、屬性精靈依 owner.elfEle（傭兵召喚共用）
@@ -219,9 +219,30 @@ function buildSummon(skId, def, durSec, owner) {
         skId: skId, n: nm, dmgDice: base.dmgDice, interval: base.interval || 20,
         ele: ele, kind: base.kind || 'melee', hitLvOff: base.hitLvOff || 0,
         dmgDiv: base.dmgDiv || 5, dmgLvDiv: base.dmgLvDiv || 0, elemScale: base.elemScale || 20,
+        dmgMult: base.dmgMult || 1, hardSkinPen: base.hardSkinPen || 0, mrPenBase: base.mrPenBase || 0,
         proc: base.proc ? { ...base.proc, cdCur: base.proc.cd } : null,
         cd: base.interval || 20, endTick: state.ticks + (durSec || 3600) * 10
     };
+}
+function refreshSummonBalance(sm, owner) {
+    owner = owner || player;
+    if(!sm || !sm.skId || !DB.skills[sm.skId] || !DB.skills[sm.skId].summon) return sm;
+    let def = DB.skills[sm.skId].summon;
+    let base = def.tiered ? summonTierByLevel(owner.lv) : def;
+    sm.dmgDice = base.dmgDice;
+    sm.interval = base.interval || 20;
+    sm.hitLvOff = base.hitLvOff || 0;
+    sm.dmgDiv = base.dmgDiv || 5;
+    sm.dmgLvDiv = base.dmgLvDiv || 0;
+    sm.elemScale = base.elemScale || 20;
+    sm.dmgMult = base.dmgMult || 1;
+    sm.hardSkinPen = base.hardSkinPen || 0;
+    sm.mrPenBase = base.mrPenBase || 0;
+    if(base.proc) {
+        let oldCd = sm.proc && sm.proc.cdCur;
+        sm.proc = { ...base.proc, cdCur: Math.min(oldCd > 0 ? oldCd : base.proc.cd, base.proc.cd) };
+    } else sm.proc = null;
+    return sm;
 }
 function setupSummon(skId, sk, owner) {
     owner = owner || player;   // 🩸 v2.6.25 owner 參數化：owner=player（玩家）或 ally（傭兵）；召喚物存於 owner.summon
@@ -234,8 +255,9 @@ function setupSummon(skId, sk, owner) {
     if(owner === player) logCombat(`你召喚了 <span class="text-purple-300">${owner.summon.n}</span>。`, 'magic', 'summon');
     else logCombat(`<span class="text-emerald-300 font-bold">【協力·${owner._allyName}】</span>召喚了 <span class="text-purple-300">${owner.summon.n}</span>。`, 'magic', 'summon');
 }
-function summonElementDamage(dice, ele, t, flatBonus, mult) {
+function summonElementDamage(dice, ele, t, flatBonus, mult, mrPen) {
     let mrBase = (t.st && t.st.mrhalf > 0) ? (t.mr / 2) : t.mr;
+    mrBase = Math.max(0, mrBase - (mrPen || 0));
     let mrFactor = mrMult(mrBase);
     let base = (roll(dice[0], dice[1]) + (flatBonus || 0)) * (mult || 1);
     return Math.max(1, Math.floor((Math.max(1, Math.floor(base * mrFactor) - (t.dr || 0))) * fragileMult(t) * elementCounterMult(ele, t.e)));   // 🔮 脆弱（白鳥5）＋⚔️屬性剋制 ×1.4(剋)/×0.6(被剋)
@@ -349,6 +371,7 @@ function allyQiguAttack(ally, t, wpn) {
 function allyAttackOnce(ally) {
     if (!ally || !ally.d) return;
     let t = getTarget(); if (!t || t.curHp <= 0) return;
+    ally._faceTgt = t;   // 🧭 v3.2.12 職業三方向：記錄本次攻擊目標（供 _class3Facing）
     if (typeof _allySpriteTrigger === 'function') _allySpriteTrigger(ally, 'attack');   // 🤝 v3.0.70 隊員戰場 sprite：攻擊動作
     if (typeof playArrowFx === 'function') playArrowFx(ally, t);   // 🏹 v3.2.8 弓箭投射物（非弓武器內部 no-op）
     let d = ally.d;

@@ -1,3 +1,28 @@
+function isMageSummonMastered(sm, owner) {
+    return !!(sm && owner && owner.mastery === 'm_summon' && (sm.skId === 'sk_zombie' || sm.skId === 'sk_summon'));
+}
+function summonAttackCount(sm, owner) {
+    owner = owner || player;
+    let cha = Math.min(60, (owner.d && owner.d.cha) || 0);
+    if(sm.kind === 'melee') return 1 + Math.floor(cha / 20);
+    if(owner.mastery === 'e_spirit' && (sm.skId === 'sk_elf_summon' || sm.skId === 'sk_elf_summon2')) return Math.min(4, 1 + Math.floor(cha / 20));
+    return 1;
+}
+function summonDamageMult(sm, owner, magicBased) {
+    let magicDmg = Math.min(12, Math.max(0, (owner.d && owner.d.magicDmg) || 0));
+    let mult = (sm.dmgMult || 1) * (1 + magicDmg / (magicBased ? 40 : 80));
+    if(isMageSummonMastered(sm, owner)) mult *= 1.20;
+    return mult;
+}
+function summonHitValue(sm, owner, target, gearHit) {
+    let cha = (owner.d && owner.d.cha) || 0;
+    let growth = Math.floor((owner.lv || 1) * 0.75 + cha * 0.35);
+    let masteryHit = isMageSummonMastered(sm, owner) ? 5 : 0;
+    let raw = (owner.lv || 1) + (sm.hitLvOff || 0) + growth + masteryHit - target.lv + mobEffAC(target)
+        + (gearHit || 0) + (hasSummonCtrlRing(owner) ? 5 : 0);
+    return stretchHitValue(raw);
+}
+
 function summonAttack(sm, owner) {
     owner = owner || player;   // 🩸 v2.6.25 owner 參數化：owner=player（預設·玩家召喚）或 ally（傭兵召喚）；讀 owner.d.cha/lv/mastery/eq，killMob 仍歸真隊長（不換身）
     if(!sm) return;
@@ -18,30 +43,26 @@ function summonAttack(sm, owner) {
         return;
     }
 
-    // === 魅力召喚物：近戰多段(floor(魅力/6)次) / 屬性精靈(單次遠距) ===
-    // 🏅 精靈精通：屬性精靈/強力屬性精靈 數量＝1+魅力/10（60魅力上限7隻，各自完整攻擊一次）
-    // 🔧 召喚「數量」(段數/隻數) 以魅力 60 封頂；超過 60 只提升下方的傷害與命中，不再增加數量
-    let chaCnt = Math.min(60, cha);
-    let hits = (sm.kind === 'melee') ? Math.max(1, Math.floor(chaCnt / 6))
-        : (((owner.mastery === 'e_spirit') && (sm.skId === 'sk_elf_summon' || sm.skId === 'sk_elf_summon2')) ? Math.min(7, 1 + Math.floor(chaCnt / 10)) : 1);
-    let hitLvOff = sm.hitLvOff || 0;
-    // 🏅 召喚精通：造屍術/召喚術的「傷害與命中判定魅力」改為 魅力×1.2（攻擊段數仍依原魅力）
-    let chaEff = ((owner.mastery === 'm_summon') && (sm.skId === 'sk_zombie' || sm.skId === 'sk_summon')) ? cha * 1.2 : cha;
+    // 魅力每 20 點增加一段完整攻擊（最多4段）；精靈精通同樣以4隻為上限。
+    // 命中另取得等級/魅力成長並走柔性地板，避免中後期怪物AC使召喚物長期只剩5%命中。
+    let hits = summonAttackCount(sm, owner);
     for(let i = 0; i < hits; i++) {
         if(t.curHp <= 0) break;
-        // 命中值 = 召喚者等級 + 偏移 + 魅力 - 目標等級 + 目標AC（d20）
-        let hv = Math.max(1, Math.min(20, owner.lv + hitLvOff + chaEff - t.lv + mobEffAC(t) + _sgb.hit + (hasSummonCtrlRing(owner) ? 5 : 0)));   // 🔧 召喚控制戒指：召喚物命中+5；🏺 喚獸師鞭 +命中
+        let hv = summonHitValue(sm, owner, t, _sgb.hit);
         let r = roll(1, 20);
         if(!((r === 20) || (r !== 1 && hv >= r) || (r === 19 && hasSummonCtrlRing(owner)))) { logCombat(`${sm.n} 的攻擊未命中。`, 'miss'); continue; }
         let dmg;
         if(sm.kind === 'ranged') {
             let flat = Math.floor(cha * owner.lv / (sm.elemScale || 20));   // 屬性精靈：魅力 x (等級/scale)
-            dmg = summonElementDamage(sm.dmgDice, sm.ele, t, flat + _sgb.dmg);
+            let mrPen = (sm.mrPenBase || 0) + Math.floor(cha / 10);
+            dmg = summonElementDamage(sm.dmgDice, sm.ele, t, flat + _sgb.dmg, summonDamageMult(sm, owner, true), mrPen);
             t.justHit = sm.ele !== 'none' ? sm.ele : 'magic';
         } else {
-            let flatBase = chaEff / (sm.dmgDiv || 5);                          // 近戰固定加成基底 = 魅力/dmgDiv（🏅 召喚精通 ×1.2）
+            let flatBase = cha / (sm.dmgDiv || 5);
             let flat = sm.dmgLvDiv ? Math.floor(flatBase * (1 + owner.lv / sm.dmgLvDiv)) : Math.floor(flatBase);   // 造屍術等具 dmgLvDiv：再乘上 (1+召喚者等級/dmgLvDiv)
-            dmg = Math.max(1, roll(sm.dmgDice[0], sm.dmgDice[1]) + flat + _sgb.dmg - (t.dr || 0) - mobHardSkin(t));   // 🔧 硬皮：額外物理減傷（召喚物近戰；但不消磨硬皮值）；🏺 喚獸師鞭 +傷害
+            let hardSkin = Math.floor(mobHardSkin(t) * (1 - (sm.hardSkinPen || 0)));
+            let raw = (roll(sm.dmgDice[0], sm.dmgDice[1]) + flat + _sgb.dmg) * summonDamageMult(sm, owner, false);
+            dmg = Math.max(1, Math.floor(raw) - (t.dr || 0) - hardSkin);
             t.justHit = 'normal';
         }
         t.curHp -= dmg; mobWake(t);
@@ -58,14 +79,25 @@ function summonTick(sm, clearFn, owner) {
         clearFn(); return;
     }
     if(--sm.cd <= 0) { sm.cd = sm.interval; summonAttack(sm, owner); }
-    // 觸發技：每 5 秒(50 tick)判定一次，傷害 = roll(骰子)+魅力
+    // 高階召喚物技能固定間隔施放；召喚精通使間隔縮短15%。
     if(sm.proc) {
+        let procCd = Math.max(1, Math.floor(sm.proc.cd * (isMageSummonMastered(sm, owner) ? 0.85 : 1)));
+        if(sm.proc.cdCur > procCd) sm.proc.cdCur = procCd;   // 已召喚後才選精通時，剩餘冷卻立即套用縮短效果
         if(--sm.proc.cdCur <= 0) {
-            sm.proc.cdCur = sm.proc.cd;
+            sm.proc.cdCur = procCd;
             let t = getTarget();
             if(t && Math.random() < sm.proc.p) {
                 let cha = (owner.d && owner.d.cha) || 0;
-                let pd = summonElementDamage(sm.proc.dmgDice, sm.proc.ele, t, cha, Math.max(1, Math.floor(cha / 6)));   // 觸發技：(roll+魅力) x floor(魅力/6)
+                let procFlat = cha + Math.floor((owner.lv || 1) / 2);
+                let pd;
+                if(sm.proc.ele && sm.proc.ele !== 'none') {
+                    let mrPen = (sm.mrPenBase || 0) + Math.floor(cha / 10);
+                    pd = summonElementDamage(sm.proc.dmgDice, sm.proc.ele, t, procFlat, summonDamageMult(sm, owner, true), mrPen);
+                } else {
+                    let hardSkin = Math.floor(mobHardSkin(t) * (1 - (sm.hardSkinPen || 0)));
+                    let raw = (roll(sm.proc.dmgDice[0], sm.proc.dmgDice[1]) + procFlat) * summonDamageMult(sm, owner, false);
+                    pd = Math.max(1, Math.floor(raw) - (t.dr || 0) - hardSkin);
+                }
                 t.curHp -= pd; t.justHit = sm.proc.ele !== 'none' ? sm.proc.ele : 'magic';
                 logCombat(`${sm.n} 發動 ${sm.proc.name}，額外造成 ${pd} 點傷害。`, 'magic');
                 let idx = mapState.mobs.findIndex(m => m && m.uid === t.uid);

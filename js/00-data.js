@@ -1,6 +1,6 @@
 /** 遊戲核心資料庫 */
 // 🏷️ 遊戲版本號（顯示於登入頁面下方·單一真相來源）：更新版本時只改這一行，登入頁面自動同步。
-const GAME_VERSION = 'v3.2.9';
+const GAME_VERSION = 'v3.2.12';
 // ===== 💾 存檔壓縮（LZString compressToUTF16/decompressFromUTF16·MIT, Pieroxy）：localStorage 內部以 UTF-16 壓縮，省 ~89%，繞過 5MB 上限 =====
 //  ⚠️ 只壓 localStorage（存檔位/倉庫/共用桶/_bak）；匯出檔維持明文 JSON（可攜·importSave 用 JSON.parse 驗證）。_lzGet 相容舊明文存檔（無 'LZ1:' 前綴→原樣回傳）。
 var LZString = (function () {
@@ -2413,7 +2413,7 @@ const DB = {
         "sk_dark_shadow": { n: "黑闇之影", type: "atk", tier: 5, reqM: 20, reqE: 40, mp: 25, dmgType: "magic", status: { kind: "blind", pbase: 150, hit: 5, dur: 20 } },
 
         // 六階魔法 (Lv 24)
-        "sk_zombie": { n: "造屍術", type: "buff", tier: 6, reqM: 24, reqE: 48, mp: 35, dur: 3600, summon: { n: "隨從：人形殭屍", dmgDice: [1, 12], dmgDiv: 5, dmgLvDiv: 20, interval: 20, kind: "melee", hitLvOff: 0 } },
+        "sk_zombie": { n: "造屍術", type: "buff", tier: 6, reqM: 24, reqE: 48, mp: 35, dur: 3600, summon: { n: "隨從：人形殭屍", dmgDice: [1, 12], dmgDiv: 5, dmgLvDiv: 20, dmgMult: 0.90, interval: 20, kind: "melee", hitLvOff: 0 } },
         "sk_haste_spell": { n: "加速術", type: "buff", tier: 6, reqM: 24, reqE: 48, mp: 40, dur: 1200, haste: true, msg: "你感到身體變得非常輕盈。" },
         "sk_cancel": { n: "魔法相消術", type: "heal", tier: 6, reqM: 24, reqE: 48, mp: 40, msg: "你全身上下感到涼意。" },
         "sk_earthquake": { n: "地裂術", type: "atk", tier: 6, reqM: 24, reqE: 48, mp: 25, dmgType: "magic", ele: "earth", dmgDice: [10, 8] },
@@ -2485,7 +2485,7 @@ const DB = {
 
         // 四階 (Lv 40)
         "sk_elf_magicerase": { n: "魔法消除", type: "atk", tier: 4, reqE: 40, mp: 30, dmgType: "magic", status: { kind: "mrhalf", pbase: 150, dur: 16 } },
-        "sk_elf_summon": { n: "召喚屬性精靈", type: "buff", tier: 4, reqE: 40, mp: 30, dur: 3600, reqEleAny: true, summon: { n: "夥伴：{ele}精靈", dmgDice: [1, 40], elemScale: 20, interval: 10, kind: "ranged", eleFromPlayer: true, hitLvOff: 10 } },
+        "sk_elf_summon": { n: "召喚屬性精靈", type: "buff", tier: 4, reqE: 40, mp: 30, dur: 3600, reqEleAny: true, summon: { n: "夥伴：{ele}精靈", dmgDice: [1, 40], elemScale: 20, dmgMult: 1.00, mrPenBase: 10, interval: 10, kind: "ranged", eleFromPlayer: true, hitLvOff: 10 } },
         "sk_elf_dancefire": { n: "舞躍之火", type: "buff", tier: 4, reqE: 40, mp: 30, dur: 1200, reqEle: "fire", d: { meleeDmg: 5 } },
         "sk_elf_stormeye": { n: "暴風之眼", type: "buff", tier: 4, reqE: 40, mp: 40, dur: 1200, reqEle: "wind", d: { rangedDmg: 2, rangedHit: 2 } },
         "sk_elf_earthshield": { n: "大地屏障", type: "buff", tier: 4, reqE: 40, mp: 50, dur: 8, reqEle: "earth" },
@@ -2493,7 +2493,7 @@ const DB = {
         "sk_elf_earthbless": { n: "大地的祝福", type: "buff", tier: 4, reqE: 40, mp: 35, dur: 1200, reqEle: "earth", d: { ac: 7 } },
 
         // 五階 (Lv 50)
-        "sk_elf_summon2": { n: "召喚強力屬性精靈", type: "buff", tier: 5, reqE: 50, mp: 50, dur: 3600, reqEleAny: true, summon: { n: "夥伴：上級{ele}精靈", dmgDice: [2, 40], elemScale: 10, interval: 10, kind: "ranged", eleFromPlayer: true, hitLvOff: 20 } },
+        "sk_elf_summon2": { n: "召喚強力屬性精靈", type: "buff", tier: 5, reqE: 50, mp: 50, dur: 3600, reqEleAny: true, summon: { n: "夥伴：上級{ele}精靈", dmgDice: [2, 40], elemScale: 10, dmgMult: 1.18, mrPenBase: 20, interval: 10, kind: "ranged", eleFromPlayer: true, hitLvOff: 20 } },
         "sk_elf_lifebless": { n: "生命的祝福", type: "heal", tier: 5, reqE: 50, mp: 30, reqEle: "water", hot: { interval: 30, ticks: 6 }, valDice: [1, 20], healDice: [1, 28], healBase: 28, autoBuff: true },
         "sk_elf_seal": { n: "封印禁地", type: "atk", tier: 5, reqE: 50, mp: 40, dmgType: "magic", reqEleAny: true, status: { kind: "magicseal", pbase: 100, dur: 8 } },
         "sk_elf_blazewpn": { n: "烈炎武器", type: "buff", tier: 5, reqE: 50, mp: 30, dur: 1200, reqEle: "fire", d: { meleeDmg: 5, meleeHit: 5 } },

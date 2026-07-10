@@ -1077,16 +1077,13 @@ function renderStatusEffects() {
         if(player.buffs[k] > 0 && DB.skills[k]) {
             // 迷魅術：狀態欄改顯示「迷魅：怪物名稱」，並以實際被迷魅的僕人(player.summon)為準；
             //   僕人不存在（死亡解除 / 被新召喚取代 / 已消失）時就不顯示，避免殘留。
-            // 迷魅術 / 各召喚術：狀態欄改顯示召喚物名稱（近戰召喚附上隨從數字 floor(魅力/6)，為1則不顯示）；
+            // 迷魅術 / 各召喚術：狀態欄改顯示召喚物名稱（多段或多隻時附上數量）；
             //   召喚物不存在（死亡解除 / 被新召喚取代 / 已消失）時就不顯示，避免殘留。
             if(k === 'sk_charm' || DB.skills[k].summon) {
                 let _creature = (k === 'sk_charm') ? player.charmed : player.summon;
                 if(_creature && _creature.skId === k) {
-                    let _chaC = Math.min(60, player.d.cha || 0);
                     let cnt = (k === 'sk_charm') ? 0
-                        : (_creature.kind === 'melee') ? Math.floor(_chaC / 6)
-                        : (hasMastery('e_spirit') && (k === 'sk_elf_summon' || k === 'sk_elf_summon2')) ? Math.min(7, 1 + Math.floor(_chaC / 10))   // 🏅 精靈精通：屬性精靈顯示數量 1+魅力/10（上限7）
-                        : 0;
+                        : (typeof summonAttackCount === 'function') ? summonAttackCount(_creature, player) : 1;
                     let suffix = cnt > 1 ? ` ${cnt}` : '';
                     buffs.push(`<span class="${getBuffColor(k, DB.skills[k])} font-bold">${_creature.n}${suffix}</span>`);
                 }
