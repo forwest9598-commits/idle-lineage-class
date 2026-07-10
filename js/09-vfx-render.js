@@ -837,6 +837,55 @@ function _vfxCastProjectiles(before, ele) {
         }
     }
 }
+// ===== 🏹 弓箭投射物（v3.2.8）：一般攻擊持弓者→目標，飛出一支箭矢 sprite =====
+//   素材＝天堂 66-2.spr / 66-0.spr 的箭本體（已剝除原圖烙印的地面影子·見 tools 說明）。
+//   兩張圖是「朝右上」「朝左上」的方向變體，不做旋轉——與職業動畫的兩組朝向（主玩家組／隊員組）配對：
+//     arrow_a（朝右上）＝主玩家＋隊員1（站左半場·射向右上方怪物格）
+//     arrow_b（朝左上）＝隊員2＋隊員3（站右半場·射向左上方怪物格）
+const ARROW_FX = { a: 'assets/fx/箭矢/arrow_a.png', b: 'assets/fx/箭矢/arrow_b.png' };
+const ARROW_FX_MS = 200;      // 飛行時間（略長於法術拋射物 180ms→箭矢看得出軌跡）
+let _arrowFxCache = {};       // 'a'|'b' → Image（預載·避免首發閃爍）
+(function _preloadArrowFx() { for (let k in ARROW_FX) { let im = new Image(); im.src = ARROW_FX[k]; _arrowFxCache[k] = im; } })();
+// who=玩家或傭兵；隊員序（player.allies 索引）決定用哪張方向圖：0→a（同主玩家組）·1/2→b
+function _arrowFxKey(who) {
+    if (!who || who === player) return 'a';
+    let i = ((player && player.allies) || []).indexOf(who);
+    return (i <= 0) ? 'a' : 'b';
+}
+// 持弓的一般攻擊呼叫（js/04 playerAttack／js/03 rapidfireProc／js/06 allyAttackOnce／allyRapidfire）
+//   delayMs：連射每箭錯開發射，免得整束箭疊在同一條線上
+function playArrowFx(who, target, delayMs) {
+    try {
+        if (window.__vfxOff || !who || !target) return;
+        let wpn = (who.eq && who.eq.wpn) ? DB.items[who.eq.wpn.id] : null;
+        if (!wpn || !wpn.isBow) return;   // 非弓（含空手/近戰）→ 不射箭
+        let img = _arrowFxCache[_arrowFxKey(who)]; if (!img) return;
+        let fire = () => {
+            let rect = _vfxSlotRect(target.uid); if (!rect) return;
+            let layer = _vfxLayer(); if (layer.childElementCount > 120) return;
+            // 發射點：射手 sprite 的上半身；無 sprite（舊檔無 avatar／職業動畫未載入）→ 戰鬥區底部中央
+            let sx, sy, sr = _partyMemberRect(who);
+            if (sr) { sx = sr.left + sr.width / 2; sy = sr.top + sr.height * 0.35; }
+            else {
+                let bv = document.getElementById('battle-view'), br = bv && bv.getBoundingClientRect();
+                if (!br || br.width === 0) return;
+                sx = br.left + br.width / 2; sy = br.bottom - 10;
+            }
+            let tx = rect.left + rect.width / 2, ty = rect.top + rect.height * 0.45;
+            let el = document.createElement('img');
+            el.className = 'vfx-arrow'; el.src = img.src; el.alt = ''; el.draggable = false;
+            el.style.left = sx + 'px'; el.style.top = sy + 'px';
+            layer.appendChild(el);
+            let dx = tx - sx, dy = ty - sy;
+            el.animate(
+                [ { transform: 'translate(-50%,-50%)', opacity: .95 },
+                  { transform: 'translate(calc(-50% + ' + dx.toFixed(1) + 'px), calc(-50% + ' + dy.toFixed(1) + 'px))', opacity: 1 } ],
+                { duration: ARROW_FX_MS, easing: 'cubic-bezier(.35,.05,.6,1)' }
+            ).onfinish = () => el.remove();
+        };
+        if (delayMs > 0) setTimeout(fire, delayMs); else fire();
+    } catch (e) {}
+}
 // 稀有掉落（潘朵拉權重=1）：金色名稱上升 + 金色星芒火花，定位於剛擊殺的怪物格
 function vfxRareDrop(name) {
     try {

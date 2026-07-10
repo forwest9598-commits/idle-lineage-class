@@ -26,6 +26,7 @@ function playerAttack() {
     if (wpn && wpn.isBow) {
         arrowData = consumeArrow();
         if (!arrowData) return; // 如果沒箭了，中斷攻擊
+        if (typeof playArrowFx === 'function') playArrowFx(player, target);   // 🏹 v3.2.8 弓箭投射物（箭矢確實射出後才播）
     }
 
     let isLarge = target.s === 'L';

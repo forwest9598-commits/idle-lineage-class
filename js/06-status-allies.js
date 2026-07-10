@@ -350,6 +350,7 @@ function allyAttackOnce(ally) {
     if (!ally || !ally.d) return;
     let t = getTarget(); if (!t || t.curHp <= 0) return;
     if (typeof _allySpriteTrigger === 'function') _allySpriteTrigger(ally, 'attack');   // 🤝 v3.0.70 隊員戰場 sprite：攻擊動作
+    if (typeof playArrowFx === 'function') playArrowFx(ally, t);   // 🏹 v3.2.8 弓箭投射物（非弓武器內部 no-op）
     let d = ally.d;
     // 🔮 幻術士傭兵 奇古獸攻擊（公式同玩家，用傭兵自身衍生值；裝奇古獸或魔劍精通）
     if (ally.cls === 'illusion') {
@@ -751,6 +752,7 @@ function allyRapidfire(ally) {
         if (!alive.length) break;
         let ti = alive[Math.floor(Math.random() * alive.length)];
         let mt = mapState.mobs[ti];
+        if (typeof playArrowFx === 'function') playArrowFx(ally, mt, i * 45);   // 🏹 v3.2.8 傭兵連射每箭一支投射物（鏡像玩家 rapidfireProc）
         let dice = wpn ? (mt.s === 'L' ? wpn.dmgL : wpn.dmgS) : 2;
         let _hsSub = (wpn && wpn.ignHardSkin) ? 0 : mobHardSkin(mt);   // 🗡️ 貫穿（暗黑十字弓）：傭兵連射亦無視硬皮額外減傷
         let dmg = Math.max(1, Math.floor((roll(1, dice) + (d.rangedDmg||0) + (d.extraDmg||0) - (mt.dr||0) - _hsSub + allyUnbonusBonus(ally, mt)) * _rfMult * fragileMult(mt) * wpnEnFinalMult(ally.eq && ally.eq.wpn)));   // 🔧 硬皮：額外物理減傷（貫穿時不扣）；對不死/狼人 +1D20；連射倍率（疾風5/5/連射精通）；脆弱；武器強化 +11~+20 最終倍率（與玩家連射一致·古老武器×2 機制已於 v3.1.26 移除）
