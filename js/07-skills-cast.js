@@ -5,8 +5,19 @@ function summonAttackCount(sm, owner) {
     owner = owner || player;
     let cha = Math.min(60, (owner.d && owner.d.cha) || 0);
     if(sm.kind === 'melee') return 1 + Math.floor(cha / 20);
-    if(owner.mastery === 'e_spirit' && (sm.skId === 'sk_elf_summon' || sm.skId === 'sk_elf_summon2')) return Math.min(4, 1 + Math.floor(cha / 20));
+    // 👑 v3.2.25 精靈精通改版：不再增加精靈數量/攻擊段數（改為 召喚強力屬性精靈→精靈王·見 _elfSpiritKingOverride）
     return 1;
+}
+// 👑 v3.2.26 屬性精靈規格鏡像（傭兵舊管線·buildSummon/refreshSummonBalance 兩處套用）：
+//   兩個精靈技能都改讀 js/23 的四屬性表（dice/scale/倍率/穿透/命中/攻速依屬性·王=精靈精通時的 sk_elf_summon2）；AOE 為玩家精靈王專屬（舊管線 proc 不支援全體）。
+function _elfSpiritKingOverride(sm, owner) {
+    if (!sm || (sm.skId !== 'sk_elf_summon' && sm.skId !== 'sk_elf_summon2') || typeof _spiritSpec !== 'function') return sm;
+    const king = sm.skId === 'sk_elf_summon2' && owner && owner.mastery === 'e_spirit';
+    const spec = _spiritSpec(sm.skId, sm.ele, king);
+    sm.dmgDice = spec.dice; sm.elemScale = spec.scale; sm.dmgMult = spec.dmgMult;
+    sm.mrPenBase = spec.mrPenBase; sm.hitLvOff = spec.hitLvOff; sm.interval = spec.aspd;
+    if (king && typeof SPIRIT_ELE_ZH !== 'undefined' && sm.ele && SPIRIT_ELE_ZH[sm.ele]) sm.n = '夥伴：' + SPIRIT_ELE_ZH[sm.ele] + '之精靈王';
+    return sm;
 }
 function summonDamageMult(sm, owner, magicBased) {
     let magicDmg = Math.min(12, Math.max(0, (owner.d && owner.d.magicDmg) || 0));
@@ -19,7 +30,7 @@ function summonHitValue(sm, owner, target, gearHit) {
     let growth = Math.floor((owner.lv || 1) * 0.75 + cha * 0.35);
     let masteryHit = isMageSummonMastered(sm, owner) ? 5 : 0;
     let raw = (owner.lv || 1) + (sm.hitLvOff || 0) + growth + masteryHit - target.lv + mobEffAC(target)
-        + (gearHit || 0) + (hasSummonCtrlRing(owner) ? 5 : 0);
+        + (gearHit || 0);   // 🚫 v3.2.19 召喚控制戒指不再附加效果（原 命中+5 移除·戒指只決定能否挑選召喚物）
     return stretchHitValue(raw);
 }
 
@@ -33,10 +44,11 @@ function summonAttack(sm, owner) {
 
     // === 迷魅術：被迷魅怪物（單次攻擊，額外獲得 =魅力 的命中與傷害）===
     if(sm.skId === 'sk_charm') {
-        let hv = Math.max(1, Math.min(20, owner.lv + sm.hitBonus + cha - t.lv + mobEffAC(t) + _sgb.hit + (hasSummonCtrlRing(owner) ? 5 : 0)));   // 🔧 召喚控制戒指：召喚物命中+5；🏺 喚獸師鞭 +命中
+        let hv = Math.max(1, Math.min(20, owner.lv + sm.hitBonus + cha - t.lv + mobEffAC(t) + _sgb.hit));   // 🏺 喚獸師鞭 +命中（🚫 v3.2.19 召喚控制戒指命中+5 已移除）
         let r = roll(1, 20);
-        if(!((r === 20) || (r !== 1 && hv >= r) || (r === 19 && hasSummonCtrlRing(owner)))) { logCombat(`${sm.n} 的攻擊未命中。`, 'miss'); return; }
+        if(!((r === 20) || (r !== 1 && hv >= r))) { logCombat(`${sm.n} 的攻擊未命中。`, 'miss'); return; }
         let dmg = Math.max(1, roll(sm.dmgDice[0], sm.dmgDice[1]) + cha + _sgb.dmg - (t.dr || 0));
+        markBossPhysicalHit(t);
         t.justHit = 'normal'; t.curHp -= dmg; mobWake(t);
         logCombat(`<span class="text-purple-300">${sm.n}</span> 攻擊 <span class="${getMobColor(t.lv)}">${t.n}</span>，造成 ${dmg} 點傷害。`, 'player');
         if(t.curHp <= 0 && idx !== -1) killMob(idx); else renderMobs();
@@ -50,7 +62,7 @@ function summonAttack(sm, owner) {
         if(t.curHp <= 0) break;
         let hv = summonHitValue(sm, owner, t, _sgb.hit);
         let r = roll(1, 20);
-        if(!((r === 20) || (r !== 1 && hv >= r) || (r === 19 && hasSummonCtrlRing(owner)))) { logCombat(`${sm.n} 的攻擊未命中。`, 'miss'); continue; }
+        if(!((r === 20) || (r !== 1 && hv >= r))) { logCombat(`${sm.n} 的攻擊未命中。`, 'miss'); continue; }   // 🚫 v3.2.19 戒指「骰19視為命中」已移除
         let dmg;
         if(sm.kind === 'ranged') {
             let flat = Math.floor(cha * owner.lv / (sm.elemScale || 20));   // 屬性精靈：魅力 x (等級/scale)
@@ -64,6 +76,7 @@ function summonAttack(sm, owner) {
             let raw = (roll(sm.dmgDice[0], sm.dmgDice[1]) + flat + _sgb.dmg) * summonDamageMult(sm, owner, false);
             dmg = Math.max(1, Math.floor(raw) - (t.dr || 0) - hardSkin);
             t.justHit = 'normal';
+            markBossPhysicalHit(t);
         }
         t.curHp -= dmg; mobWake(t);
         logCombat(`<span class="text-purple-300">${sm.n}</span> 攻擊 <span class="${getMobColor(t.lv)}">${t.n}</span>，造成 ${dmg} 點傷害。`, 'player');
@@ -748,7 +761,14 @@ function castSkillInner(skId) {
         if(sk.reqWpnMelee && (!player.eq.wpn || DB.items[player.eq.wpn.id].isBow || DB.items[player.eq.wpn.id].ranged)) return false;   // 🐉 燃燒擊砍：須裝備近距離武器
         if(sk.reqWpnBlunt && (!player.eq.wpn || !(getWeaponTags(player.eq.wpn.id).includes('單手鈍器') || getWeaponTags(player.eq.wpn.id).includes('雙手鈍器')))) return false;   // ⚔️ 戰斧投擲：須裝備單手／雙手鈍器
         if(sk.reqShield && !player.eq.shield && !(player.eq.wpn && getWeaponTags(player.eq.wpn.id).includes('武士刀'))) return false;   // 武士刀：免盾亦可施展
-        if(sk.summon) { setupSummon(skId, sk); player.mp -= cost; calcStats(); return true; }
+        // 🧙 v3.2.21 玩家召喚類 v2：sk_summon／sk_zombie（造屍術）／sk_elf_summon(2)（屬性精靈）分流到 js/23（多實體·可被攻擊·浮動框）；迷魅與傭兵維持舊 setupSummon 管線
+        if(sk.summon) {
+            if (typeof SUMMON_V2_SKILLS !== 'undefined' && SUMMON_V2_SKILLS.includes(skId) && typeof summonV2CastFor === 'function') {
+                if (!summonV2CastFor(skId, false)) return false;
+                player.mp -= cost; calcStats(); return true;
+            }
+            setupSummon(skId, sk); player.mp -= cost; calcStats(); return true;
+        }
         // 🧹 v3.1.79 大掃除：移除不可達的舊版淨化分支（sk_antidote/sk_holy_light/sk_cancel 的 type 皆為 'heal'→一律在上方 heal 淨化分支處理並 return·永遠到不了本 buff 分支；現行規則＝teamCleanseOne 一次只解一人·舊分支「只解玩家自身」語意已過時）
         player.buffs[skId] = sk.dur;
         if(sk.awaken && player.mastery !== 'k_awaken') { ['sk_dragon_awaken_antares','sk_dragon_awaken_falion','sk_dragon_awaken_baraka'].forEach(_ak => { if(_ak !== skId) player.buffs[_ak] = 0; }); }   // 🐉 覺醒互斥：非覺醒精通時同時只能維持一種覺醒
@@ -854,6 +874,7 @@ function autoActions() {
             if(sk.awaken && player.mastery !== 'k_awaken' && ['sk_dragon_awaken_antares','sk_dragon_awaken_falion','sk_dragon_awaken_baraka'].some(a => (player.buffs[a]||0) > 0)) return;   // 🐉 覺醒互斥：已有一種覺醒生效時不自動施放其他覺醒（避免互相清除而反覆耗HP/MP）；覺醒精通可同時三種
             if(sk.cube && mapState.current.startsWith('town_')) return;   // 🔮 立方：安全區(村莊)不自動施放，進入狩獵區(非 town_)才展開
             if(sk.stormInterval && mapState.current.startsWith('town_')) return;   // 🌨️🔥 火牢/冰雪颶風等持續傷害增益(STORM_BUFF_SKILLS)：安全區(村莊)無敵人→不自動施放(免空耗 MP/洗版)，與立方/轉換魔法一致
+            if(sk.summon && typeof _petInWild === 'function' && !_petInWild()) return;   // 🧟 v3.2.21 召喚類增益：安全區/無怪區不自動施放（v2 施放會被擋→免反覆嘗試洗版·比照立方/颶風）
             // 👑 力盔/敏盔版同效果已生效：跳過自動施放對應的法師/王族魔法版（recomputeStats@4037 會把同名 buff 歸零；若仍自動施放會每 tick 被歸零後反覆重施＝無限洗版）
             if((sid === 'sk_ench_wpn' && (player.buffs.sk_helm_str1||0) > 0) || (sid === 'sk_dex_up' && (player.buffs.sk_helm_dex1||0) > 0) || (sid === 'sk_reveal' && (player.buffs.sk_helm_str2||0) > 0)) return;
             let chk = document.getElementById(`auto-sk-${sid}`);
