@@ -635,7 +635,7 @@
         @keyframes vfxLvFlash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes vfxBossFlash { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
 
-        #mobile-vitals { display: none !important; }   /* 🖥️ 桌機專用：手機版排版已移除，此置頂血條元件永久隱藏 */
+        #mobile-vitals { display: none !important; }   /* 🖥️ 桌面預設隱藏；手機斷點於檔案後段啟用 */
 
         /* 🖥️ 桌面高解析度清晰度：略增文字與圖示銳利度（1920/2560/3840 通用，效果輕微、不改版面） */
         html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
@@ -1531,6 +1531,106 @@ button.classic-skill-cell { cursor:pointer; }
 }
 #town-view > #town-npc-container.hidden,
 #town-view > #town-interaction-container.hidden { display: none !important; }
+
+/* ===== Mobile game layout (desktop rules remain unchanged) ===== */
+@media (max-width: 768px), (max-height: 520px) and (pointer: coarse) {
+    body { overflow: hidden; }
+
+    #game-screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px !important;
+        width: 100%;
+        height: 100dvh;
+        padding: 8px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    #game-screen.hidden { display: none !important; }
+
+    #mobile-vitals {
+        position: sticky;
+        top: 0;
+        z-index: 70;
+        order: -10;
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 54px;
+        padding: 6px 8px;
+        border: 1px solid #8d6846;
+        border-radius: 4px;
+        background: linear-gradient(180deg, rgba(48,47,57,.98), rgba(28,27,34,.98));
+        box-shadow: 0 4px 12px rgba(0,0,0,.72);
+    }
+    #mobile-vitals .mv-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1 1 auto; min-width: 0; }
+    #mobile-vitals .mv-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
+    #mobile-vitals .mv-label { width: 20px; flex: 0 0 20px; font-size: 11px; font-weight: 800; }
+    #mobile-vitals .mv-bar { position: relative; height: 20px; flex: 1 1 auto; min-width: 0; overflow: hidden; border: 1px solid #5f5148; border-radius: 2px; background: #15151b; }
+    #mobile-vitals .mv-bar > div { height: 100%; }
+    #mobile-vitals .mv-bar > span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 800; text-shadow: 0 1px 2px #000; }
+    #mobile-vitals #mv-action-btn { flex: 0 0 auto; min-width: 54px; min-height: 40px; padding: 0 10px; border: 1px solid #70816d; border-radius: 3px; color: #dce8dc; background: linear-gradient(180deg,#35493b,#1b241e); font-weight: 700; }
+
+    #col-center, #col-left, #col-right { width: 100% !important; min-width: 0; flex: 0 0 auto; gap: 8px !important; }
+    #col-center { order: 1; }
+    #col-left { order: 2; }
+    #col-right { order: 3; min-height: 620px; }
+
+    #map-view-panel { flex: 0 0 auto !important; min-height: 0; }
+    #map-view-panel > .panel-header {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 7px;
+        padding: 8px;
+    }
+    #map-view-panel > .panel-header > span { min-width: 0; font-size: 16px !important; gap: 6px !important; }
+    #map-view-panel > .panel-header > div { display: flex; flex-wrap: wrap; gap: 6px !important; width: 100%; }
+    #map-view-panel > .panel-header button,
+    #map-view-panel > .panel-header select { min-height: 40px; font-size: 14px !important; }
+    #map-view-panel > .panel-header select { flex: 1 1 125px; min-width: 0; padding: 4px 7px !important; }
+    #map-view-panel > .panel-header button { flex: 1 1 68px; padding: 5px 8px !important; }
+
+    #battle-view.area-fit:not(.hidden),
+    #battle-view:not(.area-fit):not(.hidden),
+    #town-view:not(.hidden) {
+        width: 100%;
+        max-width: 100%;
+        aspect-ratio: 16 / 9;
+        height: auto;
+        min-height: 0;
+    }
+    #battle-view { padding: 6px !important; }
+    #battle-view.area-fit:has(.boss-slot) { padding: 0 !important; }
+    #battle-view.area-fit #mob-list,
+    #battle-view.area-fit #mob-list:has(.boss-slot),
+    #battle-view.area-fit #mob-list:has(.mob-back) { height: clamp(118px, 42vw, 185px); gap: 4px !important; }
+    #battle-view.area-fit .mob-target { padding: 3px; min-width: 0; }
+    #battle-view .mob-name { font-size: 11px; line-height: 1.1; }
+    #town-npc-map { width: 100%; height: 100%; }
+
+    #log-row { flex: 0 0 auto !important; min-height: 0; flex-direction: column; gap: 8px !important; }
+    #combat-log-panel, #syslog-panel { flex: 0 0 190px !important; width: 100%; height: 190px !important; min-height: 190px; }
+    #log-row .panel-header { padding: 7px 9px; font-size: 14px !important; }
+    #combat-log, #sys-log { padding: 9px !important; font-size: 13px !important; }
+    #combat-log-panel .cf-pill { min-height: 30px; padding: 3px 7px; }
+
+    #status-panel .panel-header, #squad-panel .panel-header { padding: 8px 10px; }
+    #squad-tab-team, #squad-tab-skill { max-height: none; }
+
+    #col-right > .tab-bar { position: sticky; top: 62px; z-index: 65; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 5px !important; padding: 6px !important; }
+    #col-right > .tab-bar .btn { min-height: 42px; padding: 6px 2px !important; font-size: 13px !important; }
+    #tab-content-panel { flex: 0 0 auto !important; height: min(72dvh, 680px); min-height: 520px; }
+    #tab-stats { padding: 14px !important; gap: 14px !important; font-size: 15px !important; }
+    #tab-stats > .grid { gap: 8px 12px !important; }
+
+    #town-interaction-container:not(.hidden) { width: calc(100vw - 16px); height: calc(100dvh - 16px); max-width: none; max-height: none; border-width: 2px; }
+    #town-interaction-container:not(.hidden) > div:first-child { margin-bottom: 8px !important; padding: 10px !important; }
+}
 .town-npc {
     position: absolute; cursor: pointer; transform: translate(-50%, -100%);
     transition: filter .12s ease, transform .12s ease; line-height: 0;
