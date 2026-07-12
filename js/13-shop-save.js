@@ -1111,21 +1111,14 @@ function saveGame() {
         setHpConvert: document.getElementById('set-hp-convert') ? document.getElementById('set-hp-convert').value : '',
         setHpSkill: document.getElementById('set-hp-skill') ? document.getElementById('set-hp-skill').value : '',
         setHaste: document.getElementById('set-haste').checked,
-        setAutoBuyHaste: document.getElementById('set-auto-buy-haste').checked,
         setBrave: document.getElementById('set-brave').checked,
-        setAutoBuyBrave: document.getElementById('set-auto-buy-brave').checked,
         setBlue: document.getElementById('set-blue').checked,
-        setAutoBuyBlue: document.getElementById('set-auto-buy-blue').checked,
         setCautious: document.getElementById('set-cautious').checked,
-        setAutoBuyCautious: document.getElementById('set-auto-buy-cautious').checked,
         setElfcookie: document.getElementById('set-elfcookie').checked,
-        setAutoBuyElfcookie: document.getElementById('set-auto-buy-elfcookie').checked,
         setPoly: document.getElementById('set-poly').checked,
-        setAutoBuyPoly: document.getElementById('set-auto-buy-poly').checked,
         setMagicbarrier: document.getElementById('set-magicbarrier').checked,
         setTeleport: document.getElementById('set-teleport').checked,
-        setAutoBuyTeleport: document.getElementById('set-auto-buy-teleport').checked,
-        setAutoBuyArrow: document.getElementById('set-auto-buy-arrow').checked,
+        setAutoBuyArrow: document.getElementById('set-auto-buy-arrow').checked,   // 🧪 v3.3.15 各藥水/卷軸「自動購買」已併入「自動使用」→移除獨立收集；弓箭自動購買維持
         autoBuffSkills: {} // 用來儲存動態生成的法術 Buff
     };
     
@@ -1437,21 +1430,14 @@ function loadGame() {
             
             // 藥水與卷軸開關
             if (c.setHaste !== undefined) document.getElementById('set-haste').checked = c.setHaste;
-            if (c.setAutoBuyHaste !== undefined) document.getElementById('set-auto-buy-haste').checked = c.setAutoBuyHaste;
             if (c.setBrave !== undefined) document.getElementById('set-brave').checked = c.setBrave;
-            if (c.setAutoBuyBrave !== undefined) document.getElementById('set-auto-buy-brave').checked = c.setAutoBuyBrave;
             if (c.setBlue !== undefined) document.getElementById('set-blue').checked = c.setBlue;
-            if (c.setAutoBuyBlue !== undefined) document.getElementById('set-auto-buy-blue').checked = c.setAutoBuyBlue;
             if (c.setCautious !== undefined) document.getElementById('set-cautious').checked = c.setCautious;
-            if (c.setAutoBuyCautious !== undefined) document.getElementById('set-auto-buy-cautious').checked = c.setAutoBuyCautious;
             if (c.setElfcookie !== undefined) document.getElementById('set-elfcookie').checked = c.setElfcookie;
-            if (c.setAutoBuyElfcookie !== undefined) document.getElementById('set-auto-buy-elfcookie').checked = c.setAutoBuyElfcookie;
             if (c.setPoly !== undefined) document.getElementById('set-poly').checked = c.setPoly;
-            if (c.setAutoBuyPoly !== undefined) document.getElementById('set-auto-buy-poly').checked = c.setAutoBuyPoly;
             if (c.setMagicbarrier !== undefined) document.getElementById('set-magicbarrier').checked = c.setMagicbarrier;
             if (c.setTeleport !== undefined) document.getElementById('set-teleport').checked = c.setTeleport;
-            if (c.setAutoBuyTeleport !== undefined) document.getElementById('set-auto-buy-teleport').checked = c.setAutoBuyTeleport;
-            if (c.setAutoBuyArrow !== undefined) document.getElementById('set-auto-buy-arrow').checked = c.setAutoBuyArrow;
+            if (c.setAutoBuyArrow !== undefined) document.getElementById('set-auto-buy-arrow').checked = c.setAutoBuyArrow;   // 🧪 v3.3.15 各藥水/卷軸「自動購買」勾選已移除（併入自動使用）→不再還原
             
             // 動態魔法 Buff 設定還原
             if (c.autoBuffSkills) {

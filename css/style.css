@@ -1631,6 +1631,218 @@ button.classic-skill-cell { cursor:pointer; }
     #town-interaction-container:not(.hidden) { width: calc(100vw - 16px); height: calc(100dvh - 16px); max-width: none; max-height: none; border-width: 2px; }
     #town-interaction-container:not(.hidden) > div:first-child { margin-bottom: 8px !important; padding: 10px !important; }
 }
+
+/* ===== Unified floating-window palette ===== */
+:is(#autosell-rule-modal, #autosell-preview-modal, #poly-modal, #osiris-box-modal,
+    #summon-select-overlay, #pet-evo-overlay, #pet-gear-overlay,
+    #card-book, #equip-book, #misc-book, #relic-book, #collection-panel) {
+    background: rgba(12, 11, 15, .80) !important;
+    backdrop-filter: blur(3px);
+}
+
+:is(#autosell-rule-modal .as-box, #autosell-preview-modal > div,
+    #poly-modal > div, #osiris-box-modal > div,
+    #summon-select-overlay > div, #pet-evo-overlay > div, #pet-gear-overlay > div,
+    #card-book > div, #equip-book > div, #misc-book > div, #relic-book > div,
+    #collection-panel > div, #modal-compare, #item-modal > div:not(#modal-compare)) {
+    color: #e5e1dc !important;
+    border: 2px solid transparent !important;
+    border-radius: 6px !important;
+    background:
+        linear-gradient(120deg, rgba(255,255,255,.025), transparent 28%, rgba(0,0,0,.08) 72%) padding-box,
+        linear-gradient(180deg, #302f39 0%, #292832 55%, #222129 100%) padding-box,
+        linear-gradient(135deg, #3f2a20 0%, #95633f 22%, #543729 46%, #c29a67 62%, #4a3024 82%, #7d5338 100%) border-box !important;
+    box-shadow: inset 0 0 0 1px rgba(12,10,12,.82), inset 0 1px rgba(220,177,116,.13), 0 18px 46px rgba(0,0,0,.78) !important;
+}
+
+:is(#card-book, #equip-book, #misc-book, #relic-book, #collection-panel) > div > div:first-child,
+#autosell-preview-modal > div > div:first-child,
+#town-interaction-container:not(.hidden) > div:first-child {
+    color: #ddd8d2 !important;
+    border-color: #805839 !important;
+    background: linear-gradient(180deg, #302a29 0%, #211e22 48%, #17161b 100%) !important;
+    box-shadow: inset 0 1px rgba(210,164,102,.18), inset 0 -1px rgba(0,0,0,.7) !important;
+}
+
+:is(#card-book, #equip-book, #misc-book, #relic-book, #collection-panel) h2,
+#autosell-rule-modal .as-head,
+#autosell-preview-modal strong,
+:is(#poly-modal, #osiris-box-modal, #summon-select-overlay, #pet-evo-overlay, #pet-gear-overlay) h2,
+#town-interaction-container h3 {
+    color: #e7d2a7 !important;
+    text-shadow: 1px 1px 0 #000, 0 0 5px rgba(177,132,84,.30) !important;
+}
+
+:is(#card-book-tabs, #equip-book-tabs, #misc-book-tabs, #relic-book-tabs) {
+    border-color: #594638 !important;
+    background: #24232b !important;
+}
+:is(#card-book-body, #equip-book-body, #misc-book-body, #relic-book-body) [class*="bg-slate-"],
+#warehouse-window-content [class*="bg-slate-"],
+#tab-audit [class*="bg-slate-"] {
+    background-color: #292832 !important;
+}
+:is(#card-book-body, #equip-book-body, #misc-book-body, #relic-book-body) [class*="border-slate-"],
+#warehouse-window-content [class*="border-slate-"],
+#tab-audit [class*="border-slate-"] {
+    border-color: #594638 !important;
+}
+
+:is(#card-book, #equip-book, #misc-book, #relic-book, #collection-panel,
+    #autosell-rule-modal, #autosell-preview-modal,
+    #poly-modal, #osiris-box-modal, #summon-select-overlay,
+    #pet-evo-overlay, #pet-gear-overlay, #town-interaction-container) button {
+    color: #eee7dc !important;
+    border-color: #765036 !important;
+    background: linear-gradient(180deg, #3b302d 0%, #262124 54%, #18171b 100%) !important;
+    box-shadow: inset 0 1px rgba(229,190,139,.10), 0 2px 6px rgba(0,0,0,.42) !important;
+}
+:is(#card-book, #equip-book, #misc-book, #relic-book, #collection-panel,
+    #autosell-rule-modal, #autosell-preview-modal,
+    #poly-modal, #osiris-box-modal, #summon-select-overlay,
+    #pet-evo-overlay, #pet-gear-overlay, #town-interaction-container) button:hover:not(:disabled) {
+    color: #fff0d8 !important;
+    border-color: #ad8052 !important;
+    background: linear-gradient(180deg, #554039 0%, #342a2b 55%, #1d191d 100%) !important;
+}
+
+#collection-panel > div > div:last-child > button {
+    min-height: 0;
+    height: 44px;
+    padding: 6px 14px !important;
+    font-size: 16px !important;
+}
+#collection-panel button[onclick="collectionOpenEquip()"] {
+    color: #ced7e5 !important;
+    border-color: #68778e !important;
+    background: linear-gradient(180deg, #414a59 0%, #2b313c 56%, #1b1e25 100%) !important;
+}
+#collection-panel button[onclick="collectionOpenMisc()"] {
+    color: #ead9ae !important;
+    border-color: #92744b !important;
+    background: linear-gradient(180deg, #544630 0%, #342d24 56%, #1f1b18 100%) !important;
+}
+#collection-panel button[onclick="collectionOpenCard()"] {
+    color: #dfc7d7 !important;
+    border-color: #826277 !important;
+    background: linear-gradient(180deg, #4f3a49 0%, #332831 56%, #201a1f 100%) !important;
+}
+#collection-panel button[onclick="collectionOpenRelic()"] {
+    color: #c9dcdb !important;
+    border-color: #617f7d !important;
+    background: linear-gradient(180deg, #394d4d 0%, #293535 56%, #1a2021 100%) !important;
+}
+#collection-panel > div > div:last-child > button:hover:not(:disabled) {
+    filter: brightness(1.12);
+}
+
+/* Preserve functional color cues while keeping them within the muted Lineage palette. */
+:is(#card-book, #equip-book, #misc-book, #relic-book) button.bg-sky-800,
+:is(#card-book, #equip-book, #misc-book, #relic-book) button.bg-sky-700 {
+    color: #d0d9e6 !important; border-color: #718096 !important;
+    background: linear-gradient(180deg,#46505e,#2d343e 58%,#1d2128) !important;
+}
+:is(#card-book, #equip-book, #misc-book, #relic-book) button.bg-amber-800,
+:is(#card-book, #equip-book, #misc-book, #relic-book) button.bg-amber-900 {
+    color: #ead9ae !important; border-color: #96764b !important;
+    background: linear-gradient(180deg,#58482f,#382f23 58%,#211c18) !important;
+}
+:is(#card-book, #equip-book, #misc-book, #relic-book) button.bg-purple-800,
+:is(#card-book, #equip-book, #misc-book, #relic-book) button.bg-purple-700,
+:is(#card-book, #equip-book, #misc-book, #relic-book) button.bg-pink-800,
+:is(#card-book, #equip-book, #misc-book, #relic-book) button.bg-pink-900 {
+    color: #dfcadb !important; border-color: #84677d !important;
+    background: linear-gradient(180deg,#513d4c,#342a33 58%,#201b20) !important;
+}
+:is(#card-book, #equip-book, #misc-book, #relic-book) button.bg-rose-800 {
+    color: #e3c9c7 !important; border-color: #8b6560 !important;
+    background: linear-gradient(180deg,#533c3b,#362827 58%,#211a1a) !important;
+}
+
+#autosell-rule-modal .as-sec {
+    color: #ddd8d2 !important;
+    border-color: #594638 !important;
+    background: rgba(35, 34, 42, .88) !important;
+}
+#autosell-rule-modal .as-title { color: #dcbf88 !important; }
+#autosell-rule-modal .as-help,
+#autosell-rule-modal .as-muted { color: #aaa39b !important; }
+#autosell-rule-modal .as-ex { border-color: #4f4036 !important; }
+#autosell-rule-modal .as-ex b { color: #d8bd88 !important; }
+#autosell-rule-modal input,
+#autosell-rule-modal select,
+#town-interaction-container input,
+#town-interaction-container select,
+#tab-audit input {
+    color: #eee9e1 !important;
+    border-color: #665449 !important;
+    background: #19181e !important;
+}
+#autosell-rule-modal input:focus,
+#autosell-rule-modal select:focus,
+#town-interaction-container input:focus,
+#town-interaction-container select:focus,
+#tab-audit input:focus { border-color: #b18454 !important; outline: none; }
+
+#warehouse-window-frame {
+    color: #e5e1dc !important;
+    border: 2px solid transparent !important;
+    border-radius: 6px !important;
+    background:
+        linear-gradient(180deg, #302f39, #23222a) padding-box,
+        linear-gradient(135deg, #3f2a20, #95633f 25%, #c29a67 60%, #4a3024 84%) border-box !important;
+    box-shadow: inset 0 0 0 1px #0d0c0f, 0 20px 48px rgba(0,0,0,.82) !important;
+}
+#warehouse-window-drag {
+    color: #e8d7b8 !important;
+    border-color: #805839 !important;
+    background: linear-gradient(180deg, #39302c 0%, #242023 52%, #17161b 100%) !important;
+}
+#warehouse-window-close {
+    color: #eee7dc !important;
+    border-color: #8d6846 !important;
+    background: linear-gradient(180deg,#443731,#262124 58%,#17161a) !important;
+}
+#warehouse-window-content { color: #ddd8d2 !important; background: #27262f !important; }
+#warehouse-window-content :is(.bg-slate-900, .bg-slate-800, .bg-slate-700),
+#town-interaction-container :is(.bg-slate-900, .bg-slate-800, .bg-slate-700),
+#tab-audit :is(.bg-slate-900, .bg-slate-800, .bg-slate-700) { background-color: #24232b !important; }
+#warehouse-window-content [class*="border-slate-"],
+#town-interaction-container [class*="border-slate-"],
+#tab-audit [class*="border-slate-"] { border-color: #594638 !important; }
+
+#town-interaction-container:not(.hidden) {
+    color: #ddd8d2 !important;
+    border: 2px solid transparent !important;
+    border-radius: 6px !important;
+    background:
+        linear-gradient(180deg, #302f39, #23222a) padding-box,
+        linear-gradient(135deg, #3f2a20, #95633f 24%, #c29a67 62%, #4a3024 84%) border-box !important;
+    box-shadow: inset 0 0 0 1px #0d0c0f, 0 22px 48px rgba(0,0,0,.84) !important;
+}
+#interaction-content > div,
+#interaction-content [class*="bg-slate-"] { background-color: #282730 !important; }
+#interaction-content .list-item { border-color: #514138 !important; }
+
+#tab-audit { color: #ddd8d2; background: #292832 !important; }
+#tab-audit > div > div,
+#tab-audit [class*="bg-slate-800"] {
+    border-color: #594638 !important;
+    background-color: rgba(47, 45, 52, .88) !important;
+}
+#tab-audit .text-purple-300,
+#tab-audit .text-cyan-300,
+#tab-audit .text-emerald-300 { color: #d9bd8b !important; }
+
+.cdd-pop,
+.game-tooltip {
+    color: #e5e1dc !important;
+    border-color: #8d6846 !important;
+    background: #26252d !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.78), inset 0 0 0 1px #141318 !important;
+}
+.cdd-opt:hover,
+.cdd-opt.cdd-sel { color: #fff0d8 !important; background: #4b392f !important; }
 .town-npc {
     position: absolute; cursor: pointer; transform: translate(-50%, -100%);
     transition: filter .12s ease, transform .12s ease; line-height: 0;

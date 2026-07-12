@@ -2219,8 +2219,7 @@ function allyTryBluePotion(ally) {
     let def = DB.items.potion_blue;
     let stack = player.inv && player.inv.find(i => i.id === 'potion_blue' && (i.cnt || 0) > 0);
     if (!stack) {
-        let buyChk = document.getElementById('set-auto-buy-blue');
-        if (!buyChk || !buyChk.checked) return;
+        // 🧪 v3.3.15 自動使用＝自動購買合併：已通過上方「藍色藥水」勾選閘 → 缺貨即自動購買（不再需要獨立的「自動購買」勾選）
         let unit = (typeof shopPrice === 'function') ? shopPrice(def.p || 0) : (def.p || 0);
         let need = 100;
         if ((player.gold || 0) < need * unit) return;
