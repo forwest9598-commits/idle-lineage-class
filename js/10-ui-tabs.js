@@ -673,7 +673,9 @@ const WEAPON_TAGS = {
     // 🏺 遺物 第十三批（v3.1.80）：護身斧/恢復魔棒/流星鎚=單手鈍器(鈍擊＋自動貫穿)、串刺刑具=矛(出血·雙手)、方尖碑=雙手鈍器(重擊靠 eff＋自動貫穿)、刺劍=匕首(出血)、雙刃劍=雙刀(雙擊靠 eff)；
     //    彈弓(isBow)/雙尾鞭(chainsword)/熱情魔杖(名稱含魔杖→自動貫穿)/黑暗魔導書(isWand·名稱無杖字→def 顯式 ignHardSkin) 靠旗標/名稱自判免 tag
     relic_executor_axe:['單手鈍器'], relic_healer_wand:['單手鈍器'], relic_minotaur_flail:['單手鈍器'],
-    relic_executor_skewer:['矛'], relic_weathered_obelisk:['雙手鈍器'], relic_shadow_stinger:['匕首'], relic_soulreaper_dual:['雙刀']
+    relic_executor_skewer:['矛'], relic_weathered_obelisk:['雙手鈍器'], relic_shadow_stinger:['匕首'], relic_soulreaper_dual:['雙刀'],
+    // 🏺 遺物 第十四批（v3.3.0）：兇殘惡鬼的毒牙/殘暴骸骨的破片=單手劍(反擊)、傳說海賊的迷幻雙刀=雙刀(雙擊)、熔岩灼燒的雙拳=單手鈍器(鈍擊＋自動貫穿)；屍毒之針(isBow)/不定形的變幻劍(chainsword) 靠旗標自判免 tag
+    relic_ghoul_fang:['單手劍'], relic_sparto_shard:['單手劍'], relic_pirate_dual:['雙刀'], relic_lava_fists:['單手鈍器']
 };
 function getWeaponTags(id){ return WEAPON_TAGS[id] || []; }
 // ⚔️ 雙擊機率 comboRate：未明定者依武器標籤套預設（鋼爪 33% / 雙刀 25%）；個別武器可在 def 寫 comboRate 覆寫（底比斯歐西里斯雙刀30 / 死亡之指20 / 恨之鋼爪50 / 破壞雙刀·破壞鋼爪30）。日後新增 combo 武器自動取得預設機率。
@@ -806,35 +808,73 @@ function buildItemDescHTML(item) {
     if (d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') {
         let _eff = [];
         if (d.unBonus || d.unDice || d.sp === 'elf') _eff.push('不死 / 狼人加成');
-        if (d.eff === 'pierce')     _eff.push('穿透' + (d.pierceChance !== undefined ? ' ' + d.pierceChance + '%' : ''));
+        if (d.eff === 'pierce')     _eff.push('穿透');
         if (d.eff === 'moonburst')  _eff.push('月光爆裂');
         if (d.eff === 'dice_death') _eff.push('即死');
         if (d.eff === 'haste')      _eff.push('自我加速');
         if (d.eff === 'crush')      _eff.push('重擊');
         if (d.eff === 'cleave')     _eff.push('切割');
-        if (d.eff === 'combo')      _eff.push('雙擊 ' + (d.comboRate||0) + '%');   // 🔧 鋼爪/雙刀：雙擊特效（comboRate%機率發動，額外攻擊＝完整一般攻擊）
+        if (d.eff === 'combo')      _eff.push('攻擊時有機率發動雙擊');
         if (d.weakExpose)           _eff.push('弱點曝光');   // 🐉 鎖鏈劍：一般攻擊命中12%附加（最多3層）
-        if (d.vampPct)              _eff.push('吸取HP ' + Math.round(d.vampPct * 100) + '%');   // 🐉 嗜血者鎖鏈劍
+        if (d.vampPct)              _eff.push('攻擊時吸取HP');
         if (d.ignHardSkin)          _eff.push('貫穿');   // 🗡️ 暗黑十字弓：攻擊無視硬皮額外減傷
         if (d.redSpecter)           _eff.push('紅惡靈逆襲');   // 👹 隱藏的魔族武器：攻擊4%(+每強化1%)→4D10水魔傷+吸10%HP
         if (d.blueSpecter)          _eff.push('藍惡靈奪魔');   // 👹 隱藏的魔族武器：攻擊4%(+每強化1%)→回3D6 MP
-        if (d.rapidfire)            _eff.push('連射 ' + d.rapidfire + '%');
-        if (d.block)                _eff.push('格檔：' + d.block + '%');
+        if (d.rapidfire)            _eff.push('連射');
+        if (d.block)                _eff.push('格檔');
         if (d.immStone)             _eff.push('免疫石化');
         if (d.immPoison)            _eff.push('免疫中毒');
         if (d.unique)               _eff.push('唯一（最多裝備1個）');
         if (d.eff === 'magicstrike') _eff.push('魔擊');
         if (d.eff === 'magicburst') _eff.push('魔爆');   // 🔧 神官魔杖
-        if (d.meleeHitSpell)        _eff.push(d.meleeHitSpell.skn || '命中觸發');   // 🔧 蕾雅魔杖：冰裂術
-        if (d.spellProc)            _eff.push('施放' + (d.spellProc.skn || ''));   // 🔧 烈炎之劍/克特之劍等附魔施放
-        if (d.procSkill)            _eff.push('施放' + ((DB.skills[d.procSkill] && DB.skills[d.procSkill].n) || ''));   // 🔧 冰之女王魔杖：施放冰錐
+        if (d.meleeHitSpell)        _eff.push('攻擊命中時施放' + (d.meleeHitSpell.skn || '附加法術'));
+        if (d.spellProc)            _eff.push('攻擊時有機率施放' + (d.spellProc.skn || '附加法術'));
+        if (d.procSkill) {
+            let _procName = (DB.skills[d.procSkill] && DB.skills[d.procSkill].n) || '技能';
+            _eff.push('攻擊時有機率施放' + _procName);
+        }
+        if (d.procStatusSkill) {
+            let _statusName = (DB.skills[d.procStatusSkill.skId] && DB.skills[d.procStatusSkill.skId].n) || '異常狀態';
+            _eff.push('攻擊命中時有機率造成' + _statusName);
+        }
+        if (d.procPoison || d.procPoisonRate) _eff.push('攻擊命中時有機率使目標中毒');
+        if (d.procInstakill)         _eff.push('攻擊命中時有機率使目標即死');
+        if (d.procBonusDmg)          _eff.push('攻擊時有機率造成額外傷害');
+        if (d.procDmgReduce)         _eff.push('受傷時有機率減少傷害');
+        if (d.allLures)              _eff.push('視為持有全部誘捕狀態');
+        if (d.eleBonusDmg) {
+            let _bonusEleName = { fire:'火', water:'水', wind:'風', earth:'地' }[d.eleBonusDmg.ele] || '特定屬性';
+            _eff.push('攻擊' + _bonusEleName + '屬性敵人時造成額外傷害');
+        }
+        if (d.counterAllEle)         _eff.push('一般攻擊剋制所有屬性敵人');
+        if (d.procBurn)              _eff.push('攻擊命中時使目標陷入灼燒');
+        if (d.onHitEleDmg) {
+            let _eleName = { fire:'火焰', water:'寒冰', wind:'風雷', earth:'大地', none:'無屬性' }[d.onHitEleDmg.ele] || '屬性';
+            _eff.push('攻擊命中時附加' + _eleName + '傷害');
+        }
+        if (d.freeChill)             _eff.push('施放寒冰氣息不消耗魔力');
+        if (d.noConsume && d.isArrow) _eff.push('箭矢不會消耗');
+        if (d.oneHand && d.isBow)    _eff.push('可單手持握');
+        if (d.ele && d.ele !== 'none') {
+            let _wpnEleName = { fire:'火', water:'水', wind:'風', earth:'地' }[d.ele] || d.ele;
+            _eff.push('一般攻擊化為' + _wpnEleName + '屬性');
+        }
+        if (d.skillDmgMult) {
+            let _skillNames = Object.keys(d.skillDmgMult).map(skId => (DB.skills[skId] && DB.skills[skId].n) || skId);
+            if (_skillNames.length) _eff.push('強化' + _skillNames.join('、') + '的傷害');
+        }
+        if (d.silencedBonusDmg)      _eff.push('攻擊沉默中的目標時傷害提高');
+        if (d.poisonedBonusDmg)      _eff.push('攻擊中毒的目標時傷害提高');
+        if (d.slowedBonusDmg)        _eff.push('攻擊緩速中的目標時傷害提高');
+        if (d.immParalyzeBonusDmg)   _eff.push('對免疫麻痺的目標仍能造成額外傷害');
         if (typeof weaponHasBleed === 'function' && weaponHasBleed(item.id)) _eff.push('出血');
         if (typeof getWeaponTags === 'function' && getWeaponTags(item.id).includes('單手劍')) _eff.push('反擊');
         if (typeof getWeaponTags === 'function' && getWeaponTags(item.id).includes('武士刀')) _eff.push('居合');
         if (typeof getWeaponTags === 'function' && getWeaponTags(item.id).includes('單手鈍器')) _eff.push('鈍擊');
-        if (typeof getWeaponTags === 'function' && getWeaponTags(item.id).includes('雙刀')) _eff.push('雙刃 5%（傷害×2）');   // ⚔️ 雙刀內建特性
-        if (typeof getWeaponTags === 'function' && getWeaponTags(item.id).includes('鋼爪')) _eff.push('重擊 +5%');   // ⚔️ 鋼爪內建特性：一般攻擊額外 5% 重擊
+        if (typeof getWeaponTags === 'function' && getWeaponTags(item.id).includes('雙刀')) _eff.push('雙刃（有機率造成雙倍傷害）');
+        if (typeof getWeaponTags === 'function' && getWeaponTags(item.id).includes('鋼爪')) _eff.push('重擊（有機率造成強力一擊）');
         if (typeof WAND_LIGHTARROW_IDS !== 'undefined' && WAND_LIGHTARROW_IDS.includes(item.id)) _eff.push('共鳴');
+        _eff = [...new Set(_eff)];
         _eff = filterClassicEffLabels(_eff, d);   // 🎮 經典模式：移除已停用特效字樣（classicOk 物品不過濾）
         if (_eff.length) desc += `<br><span class="text-rose-300 font-bold">特效：${_eff.join(' / ')}</span>`;
     }
@@ -852,6 +892,33 @@ function buildItemDescHTML(item) {
     if(d.mmp) statsArr.push(`MP上限${formatBonus(d.mmp)}`);
     if(d.hpR) statsArr.push(`HP恢復${formatBonus(d.hpR)}`);
     if(d.mpR) statsArr.push(`MP恢復${formatBonus(d.mpR)}`);
+    // 補齊通用裝備能力。前方武器/防具區已列出的欄位不重複加入。
+    if(d.mdmg && d.type !== 'wpn') statsArr.push(`魔法傷害${formatBonus(d.mdmg)}`);
+    if(d.extraMp) statsArr.push(`額外魔法點數${formatBonus(d.extraMp)}`);
+    if(d.magicHit) statsArr.push(`魔法命中${formatBonus(d.magicHit)}`);
+    if(d.extraDmg) statsArr.push(`額外傷害${formatBonus(d.extraDmg)}`);
+    if(d.extraHit) statsArr.push(`額外命中${formatBonus(d.extraHit)}`);
+    if(d.dr) statsArr.push(`傷害減免${formatBonus(d.dr)}`);
+    if(d.er) statsArr.push(`迴避(ER)${formatBonus(d.er)}`);
+    if(d.weightCap) statsArr.push(`負重上限${formatBonus(d.weightCap)}`);
+    if(d.potionBonus) statsArr.push(`藥水恢復量+${d.potionBonus}%`);
+    if(d.expBonus) statsArr.push(`經驗值獲得量+${d.expBonus}%`);
+    if(d.goldBonus) statsArr.push(`金幣獲得量+${d.goldBonus}%`);
+
+    // 基礎能力保留實際數值；機率觸發類能力已在上方「特效」以不含詳細數值的方式列出。
+    if(d.abnormalResist) statsArr.push(`異常狀態抵抗+${d.abnormalResist}%`);
+    if(d.freezeResist) statsArr.push(d.freezeResist >= 100 ? '免疫冰凍' : `冰凍抵抗+${d.freezeResist}%`);
+    if(d.stunResist) statsArr.push(d.stunResist >= 100 ? '免疫暈眩' : `暈眩抵抗+${d.stunResist}%`);
+    if(d.sleepResist) statsArr.push(d.sleepResist >= 100 ? '免疫睡眠' : `睡眠抵抗+${d.sleepResist}%`);
+    if(d.immParalyze) statsArr.push('免疫麻痺');
+    if(d.immSlow) statsArr.push('免疫緩速');
+    if(d.immBurn) statsArr.push('免疫灼燒');
+    if(d.immFreeze) statsArr.push('免疫冰凍');
+    if(d.immStun) statsArr.push('免疫暈眩');
+    if(d.immSleep) statsArr.push('免疫睡眠');
+    if(d.paralyzeResist) statsArr.push(d.paralyzeResist >= 100 ? '免疫麻痺' : `麻痺抵抗+${d.paralyzeResist}%`);
+    if(d.slowResist) statsArr.push(d.slowResist >= 100 ? '免疫緩速' : `緩速抵抗+${d.slowResist}%`);
+    if(d.poisonResist) statsArr.push(d.poisonResist >= 100 ? '免疫中毒' : `中毒抵抗+${d.poisonResist}%`);
     
     if (statsArr.length > 0) {
         // 如果前面沒有換行過，就幫它換行
@@ -1967,12 +2034,17 @@ function renderSquadPanel() {
                     </div>
                 </div>`;
             }
-            return `<div class="bg-slate-800/60 border border-slate-600 rounded p-2 flex flex-col gap-1">
-                <div class="flex justify-between items-center text-sm"><span class="font-bold text-amber-200">${a._allyName}</span><span class="text-slate-400 text-xs">Lv.${a.lv || 1}</span></div>
+            return `<div class="bg-slate-800/60 border border-slate-600 rounded p-2 flex flex-col gap-1 ally-compact-card">
+                <div class="ally-compact-head text-sm">
+                    <span class="font-bold text-amber-200 ally-compact-name">${a._allyName}</span>
+                    <span class="text-slate-400 text-xs whitespace-nowrap">Lv.${a.lv || 1}</span>
+                    <div class="bar-bg ally-exp-bar"><div id="squad-exp-${s}" class="bar-fill bg-yellow-500" style="width:0%"></div><div id="squad-exp-txt-${s}" class="bar-text text-white">0%</div></div>
+                </div>
                 <div id="squad-status-${s}" class="text-xs" style="color:#fca5a5;line-height:1.2;"></div>
-                <div class="flex items-center gap-1"><span class="text-red-400 text-xs text-right" style="width:1.6rem;">HP</span><div class="bar-bg flex-1 !h-4"><div id="squad-hp-${s}" class="bar-fill bg-red-600" style="width:100%"></div><div id="squad-hp-txt-${s}" class="bar-text text-white text-xs" style="line-height:16px;">0/0</div></div></div>
-                <div class="flex items-center gap-1"><span class="text-blue-400 text-xs text-right" style="width:1.6rem;">MP</span><div class="bar-bg flex-1 !h-4"><div id="squad-mp-${s}" class="bar-fill bg-blue-600" style="width:100%"></div><div id="squad-mp-txt-${s}" class="bar-text text-white text-xs" style="line-height:16px;">0/0</div></div></div>
-                <div class="flex items-center gap-1"><span class="text-yellow-500 text-xs text-right" style="width:1.6rem;">EXP</span><div class="bar-bg flex-1 !h-4"><div id="squad-exp-${s}" class="bar-fill bg-yellow-500" style="width:0%"></div><div id="squad-exp-txt-${s}" class="bar-text text-white text-xs" style="line-height:16px;">0%</div></div></div>
+                <div class="compact-dual-vitals">
+                    <div class="bar-bg compact-team-bar" title="HP"><div id="squad-hp-${s}" class="bar-fill bg-red-600" style="width:100%"></div><div id="squad-hp-txt-${s}" class="bar-text text-white">0/0</div></div>
+                    <div class="bar-bg compact-team-bar" title="MP"><div id="squad-mp-${s}" class="bar-fill bg-blue-600" style="width:100%"></div><div id="squad-mp-txt-${s}" class="bar-text text-white">0/0</div></div>
+                </div>
             </div>`;
         }).join('')
             + ((typeof renderPetTeamHTML === 'function') ? renderPetTeamHTML() : '')

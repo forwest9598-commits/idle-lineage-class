@@ -32,7 +32,7 @@
     <title>放置天堂 - 蛇神降世</title>
     <link rel="icon" type="image/png" href="assets/favicon.png">   <!-- 🖼️ 瀏覽器分頁圖示(favicon)：把你的圖放到 assets/favicon.png 即生效；可改 href 路徑或副檔名(.ico/.svg) -->
 
-    <link rel="stylesheet" href="css/style.css?v=v3.2.24-equipbadges">
+    <link rel="stylesheet" href="css/style.css?v=v3.3.8-siegefixed">
     <link rel="stylesheet" href="css/floating-ui.css?v=20260702g">
     <link rel="stylesheet" href="css/tailwind-built.css"><!-- 🔧 預編譯 Tailwind（取代執行期 JIT tailwind.js）：只含實際用到的 class，省 407KB runtime + 移除持續掃描 DOM 的成本。置於 style.css 之後以保留原 cascade（utility 平手時勝過自訂 class，與舊 JIT 注入順序一致） -->
 </head>
@@ -196,16 +196,20 @@
             <!-- 新增了 id="status-panel"，並加入去底色與加深背景的樣式確保文字可讀 -->
             <div id="status-panel" class="panel bg-cover bg-top bg-no-repeat" style="background-blend-mode: multiply; background-color: rgba(30, 41, 59, 0.85);">
                 <div class="panel-header text-center flex justify-between bg-transparent border-b border-slate-700"><span class="flex items-center shrink-0"><span id="st-classname">職業</span><span id="classic-badge" class="hidden font-bold ml-1" style="color:#fbbf24;text-shadow:0 0 5px rgba(251,191,36,0.7);font-size:0.85rem;line-height:1;" title="經典模式（硬核）：死亡損失該等級 5% 最大經驗（不降等）、無祝福/精通/席琳；掉落率、經驗與金幣獲得與一般模式相同">⚔經典</span></span><span id="victory-badge" class="hidden font-bold" style="color:#fde68a;text-shadow:0 0 6px rgba(253,230,138,0.85);font-size:1.4rem;line-height:1;align-items:center;gap:0.15rem;" title="攻城獲勝期間：全商店8折、開放獲勝城池"><span style="font-size:1.05em;line-height:1;position:relative;top:-0.08em;">👑</span><span style="line-height:1;">攻城獲勝</span></span><span id="st-class" class="text-white text-lg font-bold cursor-pointer hover:bg-slate-700/50 rounded px-2 inline-block min-w-[2.5rem] text-right" title="點擊此處修改名稱" onclick="startEditName()"></span></div>
-                <div class="p-4 space-y-3 text-base">
-                    <div class="flex justify-between text-slate-400 border-b border-slate-700 pb-2"><span>等級</span> <span class="text-white font-bold text-xl" id="st-lv">1</span></div>
-                    <div class="flex justify-between text-slate-400"><span>防禦 (AC)</span> <span class="text-white font-bold" id="st-ac">10</span></div>
-                    <div class="flex justify-between text-slate-400"><span>魔防 (MR)</span> <span class="text-white font-bold" id="st-mr">0</span></div>
-                    <div class="flex justify-between text-slate-400"><span>金幣</span> <span class="text-yellow-400 font-bold" id="st-gold">0</span></div>
-                </div>
-                <div class="p-4 pt-0 flex flex-col gap-3">
-                    <div class="flex items-center gap-3"><span class="text-red-400 font-bold w-10 text-right text-base">HP</span><div class="bar-bg flex-1 !h-6"><div id="bar-hp" class="bar-fill bg-red-600" style="width:100%"></div><div id="txt-hp" class="bar-text text-white !text-sm !line-height-[24px]">16/16</div></div></div>
-                    <div class="flex items-center gap-3"><span class="text-blue-400 font-bold w-10 text-right text-base">MP</span><div class="bar-bg flex-1 !h-6"><div id="bar-mp" class="bar-fill bg-blue-600" style="width:100%"></div><div id="txt-mp" class="bar-text text-white !text-sm !line-height-[24px]">1/1</div></div></div>
-                    <div class="flex items-center gap-3 mt-1"><span class="text-yellow-500 font-bold w-10 text-right text-sm">EXP</span><div class="bar-bg flex-1 !h-4"><div id="bar-exp" class="bar-fill bg-yellow-500" style="width:0%"></div><div id="txt-exp" class="bar-text font-normal !text-xs !line-height-[16px]">0.00%</div></div></div>
+                <div class="status-compact-body text-base">
+                    <div class="status-level-row text-slate-400">
+                        <span>等級</span><span class="text-white font-bold text-xl" id="st-lv">1</span>
+                        <div class="bar-bg status-exp-bar"><div id="bar-exp" class="bar-fill bg-yellow-500" style="width:0%"></div><div id="txt-exp" class="bar-text font-normal">0.00%</div></div>
+                    </div>
+                    <div class="status-defense-row">
+                        <span class="status-stat"><span>AC</span><strong id="st-ac">10</strong></span>
+                        <span class="status-stat"><span>MR</span><strong id="st-mr">0</strong></span>
+                    </div>
+                    <div class="status-gold-row"><span>金幣</span><span class="text-yellow-400 font-bold" id="st-gold">0</span></div>
+                    <div class="status-vitals-row">
+                        <div class="bar-bg compact-vital-bar" title="HP"><div id="bar-hp" class="bar-fill bg-red-600" style="width:100%"></div><div id="txt-hp" class="bar-text text-white">16/16</div></div>
+                        <div class="bar-bg compact-vital-bar" title="MP"><div id="bar-mp" class="bar-fill bg-blue-600" style="width:100%"></div><div id="txt-mp" class="bar-text text-white">1/1</div></div>
+                    </div>
                     <div id="castle-guard-row" class="flex items-center gap-3 mt-1 hidden"><span id="cg-name" class="text-amber-300 font-bold w-16 text-right text-xs leading-tight whitespace-nowrap">護衛</span><div class="bar-bg flex-1 !h-4"><div id="cg-bar" class="bar-fill bg-amber-500" style="width:100%"></div><div id="cg-txt" class="bar-text text-white !text-xs !line-height-[16px]">0/0</div></div></div>
                 </div>
             </div>
@@ -251,10 +255,13 @@
             <div id="battle-view" class="p-4"><div id="status-icon-bar" aria-label="角色狀態圖示"></div><div id="mob-list" class="flex gap-4 w-full"></div></div>
                 
                 <div id="town-view" class="hidden p-6 flex-col items-center gap-4 flex-1 h-full min-h-0">
-                    <h2 class="text-3xl font-bold text-emerald-400 drop-shadow-md shrink-0" id="town-name">銀騎士村</h2>
-                    <p class="text-lg text-slate-300 shrink-0">這裡是安全區域，您的體力與魔力已完全恢復。</p>
-                    
-                    <div id="town-npc-container" class="w-full bg-slate-900/50 rounded-lg flex-1 overflow-y-auto mt-2 grid grid-cols-2 gap-3 content-start pb-4">
+                    <h2 class="text-3xl font-bold text-emerald-400 drop-shadow-md shrink-0 hidden" id="town-name">銀騎士村</h2>
+                    <p class="text-lg text-slate-300 shrink-0 hidden">這裡是安全區域，您的體力與魔力已完全恢復。</p>
+
+                    <!-- 🏘️ v3.2.83 城鎮 NPC 地圖（與狩獵框同尺寸 800×450·動態站位 NPC）-->
+                    <div id="town-npc-map"></div>
+
+                    <div id="town-npc-container" class="w-full bg-slate-900/50 rounded-lg flex-1 overflow-y-auto mt-2 grid grid-cols-2 gap-3 content-start pb-4 hidden">
                         </div>
 
                     <div id="town-interaction-container" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 flex-1 mt-2 hidden flex-col min-h-0">
@@ -530,20 +537,20 @@
     })();
     </script>
 
-    <script src="js/00-data.js?v=v3.2.79-neckslot"></script>
-<script src="js/01-drops-config.js?v=v3.2.58-dropmsg"></script>
-<script src="js/02-stats-recompute.js?v=v3.2.39-auditfix1"></script>
-    <script src="js/03-combat-core.js?v=v3.2.78-catchupbudget"></script>
-    <script src="js/04-combat-attack.js?v=v3.2.44-procaoe"></script>
-<script src="js/05-kill-progression.js?v=v3.2.71-petexpreq10"></script>
-    <script src="js/06-status-allies.js?v=v3.2.67-supportpets"></script>
+    <script src="js/00-data.js?v=v3.3.10-castlethrone"></script>
+<script src="js/01-drops-config.js?v=v3.2.100-relic14-concurve"></script>
+<script src="js/02-stats-recompute.js?v=v3.2.100-relic14"></script>
+    <script src="js/03-combat-core.js?v=v3.2.100-relic14"></script>
+    <script src="js/04-combat-attack.js?v=v3.2.100-relic14"></script>
+<script src="js/05-kill-progression.js?v=v3.2.72-rift-bg"></script>
+    <script src="js/06-status-allies.js?v=v3.3.1-relic-effects"></script>
     <script src="js/07-skills-cast.js?v=v3.2.68-evomergefix"></script>
-<script src="js/08-items-equip.js?v=v3.2.60-summonstatus"></script>
-<script src="js/09-vfx-render.js?v=v3.2.72-mobanimff"></script>
-<script src="js/10-ui-tabs.js?v=v3.2.74-squadsig"></script>
-<script src="js/11-world-map.js?v=v3.2.42-lowfix"></script>
+<script src="js/08-items-equip.js?v=v3.2.97-muted-log-text"></script>
+<script src="js/09-vfx-render.js?v=v3.3.8-siegefixed"></script>
+<script src="js/10-ui-tabs.js?v=v3.3.1-relic-effects"></script>
+<script src="js/11-world-map.js?v=v3.3.10-castlethrone"></script>
 <script src="js/12-npc-quests.js?v=v3.2.70-whtombs"></script>
-<script src="js/13-shop-save.js?v=v3.2.79-neckslot"></script>
+<script src="js/13-shop-save.js?v=v3.2.102-siege-rift-anim-castle-bg"></script>
 <script src="js/14-craft-pandora.js?v=v3.2.38-classicok"></script>
 <script src="js/15-cards.js?v=v3.2.64-8dircodex"></script>
 <script src="js/16-equip-book.js?v=v3.2.37-petgear"></script>
@@ -552,7 +559,7 @@
 <script src="js/19-equipment-window.js?v=v3.2.37-petgear"></script>
 <script src="js/20-warehouse-window.js?v=20260702a"></script>
 <script src="js/21-relic-book.js?v=v3.1.7"></script>
-    <script src="js/23-summons.js?v=v3.2.74-squadsig"></script>
-    <script src="js/22-pets.js?v=v3.2.73-petanimff"></script>
+    <script src="js/23-summons.js?v=v3.2.82-magicsummon"></script>
+    <script src="js/22-pets.js?v=v3.3.1-summonflicker-petdps"></script>
 </body>
 </html>
