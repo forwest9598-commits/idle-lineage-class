@@ -33,6 +33,8 @@ const MAP_CATEGORIES = {
         {v:'dark_magic_lab',t:'黑魔法研究室'},
         {v:'necro_training',t:'冥法軍訓練場'},
         {v:'elder_room',t:'格蘭肯神殿．長老之室'},
+        {v:'dark_elf_sanctuary',t:'黑暗妖精聖地',c:'#818cf8'},
+        {v:'cursed_dark_elf_sanctuary',t:'受詛咒的黑暗妖精聖地',c:'#f87171'},
         {v:'demon_temple',t:'魔族神殿',c:'#9b2c2c',questReq:'demonTemple'},
         {v:'shadow_temple',t:'暗影神殿',c:'#7c3aed',keyHoldReq:'item_shadow_temple_key',affinityReq:1000}
     ],
@@ -143,6 +145,7 @@ const MAP_REGIONS = [
         {v:'rastabad_gate', t:'拉斯塔巴德正門'}, {v:'giant_tomb', t:'古代巨人之墓'},
         {v:'demon_temple', t:'魔族神殿'}, {v:'town_flame_audience', t:'炎魔謁見所'},
         {v:'rastabad_beast', t:'魔獸訓練場'}, {v:'dark_magic_lab', t:'黑魔法研究室'}, {v:'necro_training', t:'冥法軍訓練場'}, {v:'elder_room', t:'格蘭肯神殿．長老之室'},
+        {v:'dark_elf_sanctuary', t:'黑暗妖精聖地'}, {v:'cursed_dark_elf_sanctuary', t:'受詛咒的黑暗妖精聖地'},
         {v:'king_baranka_room', t:'魔獸君王之室'}, {v:'law_king_room', t:'法令君王之室'}, {v:'necro_king_room', t:'冥法君王之室'}, {v:'assassin_king_room', t:'暗殺君王之室'}
     ]},
     { key: 'rift', label: '時空裂痕', maps: [
