@@ -226,7 +226,11 @@
                 img.alt = data.n || pos.k;
                 img.draggable = false;
                 img.onerror = function () { this.style.display = 'none'; };
-                if (typeof isRelic === 'function' && isRelic(data)) img.classList.add('relic-glow');   // 🏺 已裝備遺物：藍光呼吸＋星芒（與背包一致）
+                // 裝備框沿用背包／舊裝備欄的統一圖示光效：祝福金光、遠古紫光、屬性光、遺物與傳說皆由單一判定處理。
+                if (typeof getGlowClass === 'function') {
+                    const glowClass = getGlowClass(item, data);
+                    if (glowClass) img.classList.add(...glowClass.split(/\s+/).filter(Boolean));
+                }
                 slot.appendChild(img);
                 if ((data.type === 'wpn' || data.type === 'arm' || data.type === 'acc') && !data.isArrow) {
                     const equipped = document.createElement('span');

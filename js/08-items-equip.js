@@ -642,7 +642,7 @@ function royalEquipOk(d, id) {
 }
 function checkCanEquip(item) {
     let d = DB.items[item.id];
-    if (d && d.reqAvatar && player && player.avatar && player.avatar !== d.reqAvatar) return false;   // 👸 性別頭像限定（公主/王子…）：單一真實裝備閘，套用於所有職業；缺 avatar(舊檔)不硬擋。職業適用顯示走 *EquipOk（純粹·不讀玩家狀態）
+    if (d && d.reqAvatar && player && ((d.strictAvatar && player.avatar !== d.reqAvatar) || (!d.strictAvatar && player.avatar && player.avatar !== d.reqAvatar))) return false;   // 👸 性別頭像限定；strictAvatar（純潔少女的憐愛）要求必須明確為女妖精，舊檔缺 avatar 亦不放行
     if (isRelic(d)) return reqAllowsClass(d, player.cls);   // 🏺 遺物：職業限制純以 req 白名單為準（略過各職業專屬 *EquipOk 武器/防具清單，否則戰士等會被拒）
     if (player.cls === 'dark') return darkEquipOk(d, item.id);   // 🔧 黑暗妖精專屬裝備規則
     if (player.cls === 'illusion') return illusionEquipOk(d, item.id);   // 🔮 幻術士專屬裝備規則（除匕首外的全職業裝備＋開放清單）
@@ -690,7 +690,7 @@ function equipItem(item) {
 
     // 職業/裝備資格統一走 checkCanEquip（含黑暗妖精規則、負重強化、劍術精通例外），與顯示用判定同一來源
     if (!checkCanEquip(item)) {
-        logSys(`無法裝備，職業不符。`);
+        logSys(d.reqAvatar ? `無法裝備，「${d.n}」僅限${d.reqAvatar}。` : `無法裝備，職業不符。`);
         return;
     }
 
@@ -1135,10 +1135,9 @@ function _updateUIImpl() {
     if(document.getElementById('st-classname')) document.getElementById('st-classname').innerText = clsDisplayName;   // 🏅 精通徽記已移除，僅顯示職業名
     if(!window._editingName) document.getElementById('st-class').innerText = (player.name || '');   // 未取名則不顯示任何文字（仍可點擊命名）
 
-    // 處理背景圖片：抓取 player.avatar 決定背景圖 (加上 bg-top 防止頭部裁切)
+    // 處理背景圖片：全部職業／性別頭像統一使用 assets/character 對應的 PNG。
     let bgImageName = player.avatar || clsDisplayName;
-    let bgExt = (player.cls === 'dark' || player.cls === 'illusion' || player.cls === 'dragon' || player.cls === 'warrior' || player.cls === 'royal') ? 'png' : 'jpg';   // 🔧 黑暗妖精／幻術士／龍騎士／戰士／王族頭像為 png，其餘職業為 jpg
-    document.getElementById('status-panel').style.backgroundImage = `url('assets/character/${bgImageName}.${bgExt}')`;
+    document.getElementById('status-panel').style.backgroundImage = `url('assets/character/${bgImageName}.png')`;
     document.getElementById('status-panel').classList.add('bg-top'); // 確保圖片從頂部對齊
 
     document.getElementById('st-ac').innerText = player.d.ac;

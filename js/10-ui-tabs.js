@@ -675,7 +675,9 @@ const WEAPON_TAGS = {
     relic_executor_axe:['單手鈍器'], relic_healer_wand:['單手鈍器'], relic_minotaur_flail:['單手鈍器'],
     relic_executor_skewer:['矛'], relic_weathered_obelisk:['雙手鈍器'], relic_shadow_stinger:['匕首'], relic_soulreaper_dual:['雙刀'],
     // 🏺 遺物 第十四批（v3.3.0）：兇殘惡鬼的毒牙/殘暴骸骨的破片=單手劍(反擊)、傳說海賊的迷幻雙刀=雙刀(雙擊)、熔岩灼燒的雙拳=單手鈍器(鈍擊＋自動貫穿)；屍毒之針(isBow)/不定形的變幻劍(chainsword) 靠旗標自判免 tag
-    relic_ghoul_fang:['單手劍'], relic_sparto_shard:['單手劍'], relic_pirate_dual:['雙刀'], relic_lava_fists:['單手鈍器']
+    relic_ghoul_fang:['單手劍'], relic_sparto_shard:['單手劍'], relic_pirate_dual:['雙刀'], relic_lava_fists:['單手鈍器'],
+    // 🏺 遺物 第十五批：爆焰＝雙手劍（切割）、撫摸＝鋼爪（雙擊）；兩把魔杖與弓由 isWand/isBow 旗標判定。
+    relic_fireking_blast:['雙手劍'], relic_waterking_caress:['鋼爪']
 };
 function getWeaponTags(id){ return WEAPON_TAGS[id] || []; }
 // ⚔️ 雙擊機率 comboRate：未明定者依武器標籤套預設（鋼爪 33% / 雙刀 25%）；個別武器可在 def 寫 comboRate 覆寫（底比斯歐西里斯雙刀30 / 死亡之指20 / 恨之鋼爪50 / 破壞雙刀·破壞鋼爪30）。日後新增 combo 武器自動取得預設機率。
@@ -1012,6 +1014,9 @@ function openModal(item, isEq, slot) {
     document.getElementById('modal-item-name').className = `text-2xl font-bold mb-3 border-b border-slate-600 pb-3 flex justify-between items-center ${getItemColor(item)}`;
     
     let desc = buildItemDescHTML(item);
+    let _modalEquipItem = d.type === 'wpn' || d.type === 'arm' || d.type === 'acc';
+    let _modalCanEquip = !_modalEquipItem || checkCanEquip(item);
+    if (!isEq && _modalEquipItem && !_modalCanEquip) desc += `<br><span class="text-red-400 font-bold">無法裝備${d.reqAvatar ? `：僅限${d.reqAvatar}` : ''}</span>`;
     
     let sellPrice = getSellPrice(item);
 
@@ -1038,7 +1043,8 @@ function openModal(item, isEq, slot) {
             act += `<button class="col-span-2 w-full btn border-green-700 bg-emerald-800 hover:bg-emerald-700 text-green-100 py-3 text-lg font-bold" onclick="useItem('${item.uid}')">使用卷軸</button>`;
         }
         if(d.type === 'wpn' || d.type === 'arm' || d.type === 'acc') {
-            act += `<button class="col-span-2 w-full btn border-blue-700 bg-blue-900 hover:bg-blue-800 text-blue-200 py-3 text-lg font-bold" onclick="equipItem(${JSON.stringify(item).replace(/"/g, '&quot;')})">裝備</button>`;
+            if (_modalCanEquip) act += `<button class="col-span-2 w-full btn border-blue-700 bg-blue-900 hover:bg-blue-800 text-blue-200 py-3 text-lg font-bold" onclick="equipItem(${JSON.stringify(item).replace(/"/g, '&quot;')})">裝備</button>`;
+            else act += `<button class="col-span-2 w-full btn border-red-900 bg-red-950 text-red-400 py-3 text-lg font-bold cursor-not-allowed" disabled>無法裝備${d.reqAvatar ? `・僅限${d.reqAvatar}` : ''}</button>`;
         }
         
         // 把販賣按鈕移出來，讓所有道具都可以賣

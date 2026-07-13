@@ -64,7 +64,7 @@
             border-top-left-radius: 0.25rem;
             border-top-right-radius: 0.25rem;
         }
-        #status-panel > .panel-header { background: transparent; color: #fbbf24; text-shadow: none; }  /* 人物左上資訊框標題：還原原本顏色 */
+        #status-panel > .panel-header { background: transparent; color: #fbbf24; text-shadow: none; border-bottom: 0 !important; }  /* 人物左上資訊框標題：取消等級上方分隔線 */
         /* 🤝 隊伍／技能設定清單：視窗過小或傭兵較多導致下方隊員設定被擋住時，清單內部出現捲軸（面板標題與 隊伍/技能設定 分頁鈕保持固定）。
            狀態框不壓縮（數值/血條保持完整）；隊伍面板可縮小讓內部清單捲動→整塊面板不會被擠出視窗外。max-height 46vh 為上限（傭兵多時大螢幕也不會霸佔整欄，保留自動化設定可見）。 */
         #status-panel { flex-shrink: 0; }
@@ -388,22 +388,56 @@
         }
         /* 緊湊狀態框：玩家、傭兵與寵物共用雙欄 HP/MP 規格。 */
         .status-compact-body { padding: 10px 16px 12px; display: flex; flex-direction: column; gap: 8px; }
-        .status-level-row { display: grid; grid-template-columns: auto auto minmax(64px, 1fr); align-items: center; gap: 5px; padding-bottom: 7px; border-bottom: 1px solid #334155; white-space: nowrap; }
-        .status-exp-bar { height: 14px; min-width: 0; }
-        .status-exp-bar .bar-text { font-size: 10px; line-height: 14px; }
-        .status-defense-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; color: #94a3b8; }
+        .status-level-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-bottom: 0; border-bottom: 0; white-space: nowrap; }
+        .status-exp-bar { width: 94%; height: 9px; min-width: 0; align-self: center; }
+        .status-exp-bar .bar-text { font-size: 8px; line-height: 9px; }
+        .status-defense-row { display: flex; flex-direction: column; gap: 8px; color: #94a3b8; }
         .status-stat { display: flex; align-items: center; justify-content: space-between; min-width: 0; gap: 6px; white-space: nowrap; }
         .status-stat strong { color: #fff; }
         .status-gold-row { display: flex; align-items: center; justify-content: space-between; color: #94a3b8; }
+        /* 左上基礎數值：與標籤同級尺寸、中等字重，降低亮度以免搶過 HP／MP。 */
+        #status-panel #st-lv, #status-panel #st-ac, #status-panel #st-mr, #status-panel #st-gold {
+            font-size: 1rem !important;
+            line-height: 1.5rem;
+            font-weight: 500 !important;
+            font-variant-numeric: tabular-nums;
+        }
+        #status-panel #st-lv, #status-panel #st-ac, #status-panel #st-mr { color: #cbd5e1 !important; }
+        #status-panel #st-gold { color: #d6b45f !important; }
         .status-vitals-row, .compact-dual-vitals { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 7px; }
+        /* 左上角色 HP／MP：以 334×34 血條底圖為完整雙條框，內部血量依原圖比例定位。 */
+        .status-vitals-row {
+            position: relative;
+            display: block;
+            width: 100%;
+            aspect-ratio: 334 / 34;
+            background: url('../assets/character/血條底圖.png') center / 100% 100% no-repeat;
+        }
+        .status-vitals-row > .compact-vital-bar {
+            position: absolute;
+            top: 50%;
+            width: 41.2%;
+            height: 30%;
+            min-height: 9px;
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            box-shadow: none;
+            transform: translateY(-50%);
+        }
+        .status-vitals-row > .compact-vital-bar:first-child { left: 3.3%; }
+        .status-vitals-row > .compact-vital-bar:nth-child(2) { left: 55.5%; }
+        .status-vitals-row > .compact-vital-bar .bar-fill { border-radius: 999px; }
+        .status-vitals-row > .compact-vital-bar .bar-text { font-size: 8px; line-height: 1; top: 50%; transform: translateY(-50%); }
         .compact-vital-bar { height: 17px; min-width: 0; }
         .compact-vital-bar .bar-text { font-size: 11px; line-height: 17px; }
         .ally-compact-head { display: grid; grid-template-columns: minmax(0, auto) auto minmax(70px, 1fr); align-items: center; gap: 6px; }
         .ally-compact-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ally-exp-bar { height: 12px; min-width: 0; }
         .ally-exp-bar .bar-text { font-size: 9px; line-height: 12px; }
-        .compact-team-bar { height: 13px; min-width: 0; }
-        .compact-team-bar .bar-text { font-size: 9px; line-height: 13px; }
+        /* 傭兵 HP／MP：與主角內條同為 9px、沿用相同紅藍漸層；不套主角的雙條底框圖片。 */
+        .compact-team-bar { height: 9px; min-width: 0; }
+        .compact-team-bar .bar-text { font-size: 8px; line-height: 9px; }
         /* 🛡️ 裝備可用職業 logo：細金邊、無發光特效 */
         .class-eq-icon { display: inline-block; width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 4px; border: 1px solid #c9a227; border-radius: 4px; background: #11161f; box-shadow: none; }
         .c-blessed { color: #facc15; } .c-ancient { color: #c084fc; } .c-rare { color: #fb923c; } .c-attr { color: #22d3ee; } .c-anc-bless { color: #e3a625; }
