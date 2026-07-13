@@ -58,6 +58,7 @@ const SPECIAL_AREA_BG = {   // 特殊地圖：逐張對應背景
     elder_room: 'assets/area/軍王之室.jpg',         // 🏛️ 格蘭肯神殿．長老之室（無專屬背景圖·借用軍王之室背景）
     dark_elf_sanctuary: 'assets/area/1920x1080/黑暗妖精聖地.jpg',
     cursed_dark_elf_sanctuary: 'assets/area/1920x1080/受詛咒的黑暗妖精聖地.jpg',
+    collapsed_elder_council_hall: 'assets/area/1920x1080/崩壞的長老會議廳.jpg',   // 🌑 v3.3.33 長老會議廳改為安全區 town_elder_council（背景走 TOWN_BG_1920）
     thebes_desert: 'assets/area/底比斯沙漠.jpg',   // 🏛️ 底比斯 沙漠（專屬背景）
     thebes_pyramid: 'assets/area/底比斯.jpg',      // 🏛️ 底比斯 金字塔內部（與祭壇共用底比斯背景）
     thebes_temple: 'assets/area/底比斯.jpg',        // 🏛️ 底比斯 歐西里斯祭壇（純BOSS房）
@@ -88,7 +89,8 @@ const TOWN_BG_1920 = {
     town_elf: '妖精森林村莊', town_talking: '說話之島村莊', town_gludio: '燃柳村莊', town_witon: '威頓村莊',
     town_hyperia: '希培利亞', town_silver_knight: '銀騎士村莊', town_ivory_tower: '象牙塔（1~3樓）',
     town_sherine: '席琳神殿', town_silent: '沉默洞穴', town_behemoth: '貝希摩斯', town_flame_audience: '炎魔謁見所',
-    town_pride: '傲慢之塔1樓', town_rift: '時空裂痕入口', town_pirate_village: '海賊島村莊'
+    town_pride: '傲慢之塔1樓', town_rift: '時空裂痕入口', town_pirate_village: '海賊島村莊',
+    town_elder_council: '長老會議廳'   // 🌑 v3.3.33 黑暗妖精聖地樞紐安全區
 };
 function mapDisplayName(v) { for (let _c in MAP_CATEGORIES) { let _e = MAP_CATEGORIES[_c].find(x => x.v === v); if (_e) return _e.t; } return null; }
 function applyAreaBackground() {
