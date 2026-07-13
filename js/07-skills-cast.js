@@ -376,6 +376,7 @@ function castSkillInner(skId) {
         let dmg = Math.max(1, Math.floor(raw * mult));   // MP 佔比倍率（必定爆擊已含於 base.dmg）
         if (_t.race === '血盟') dmg *= 2;                                 // 對血盟敵人 x2
         _t.curHp -= dmg; _t.justHit = getWpnEle(player.eq.wpn, wpn); mobWake(_t);
+        if (typeof reflectWallOnDamage === 'function') reflectWallOnDamage(_t, dmg, (wpn && (wpn.isBow || wpn.ranged)) ? 'ranged' : 'melee', null);   // 🌑 v3.4.14 血壁空間：會心一擊＝技能直擊反射（玩家傭兵一致）
         logCombat(`<span class="font-bold" style="color:#f0abfc;text-shadow:0 0 8px #d946ef;">【會心一擊】</span>對 <span class="${getMobColor(_t.lv)}">${_t.n}</span> 造成 ${dmg} 點致命傷害！`, 'player-crit');
         let _i = mapState.mobs.findIndex(m => m && m.uid === _t.uid);
         if (_t.curHp <= 0) { if (_i !== -1) killMob(_i); } else renderMobs();
@@ -490,6 +491,7 @@ function castSkillInner(skId) {
                 dmg = Math.floor(dmg * weakExposeDmgMult(t));   // 🏅 鎖刃精通：每層弱點曝光最終傷害+10%
                 if (sk.hpCost && player._setDragonblood5) dmg = Math.max(1, Math.floor(dmg * 1.2));   // 🐉 龍血5/5：HP消耗技傷害+20%（屠宰者＝物理HP消耗技·與魔法路徑 js/07 一致）
                 t.curHp -= dmg; t.justHit = getWpnEle(player.eq.wpn, wpn); total += dmg; mobWake(t);
+                if (typeof reflectWallOnDamage === 'function') reflectWallOnDamage(t, dmg, 'melee', null);   // 🌑 v3.4.14 血壁空間：屠宰者每擊＝近距離技能直擊反射（玩家傭兵一致）
                 log.push(dmg + (res.heavy ? '(重)' : ''));
                 if (t.curHp > 0) wearHardSkin(t, player.eq.wpn ? player.eq.wpn.id : null, res.heavy, false, true, player.classicMode);
             }
@@ -619,6 +621,7 @@ function castSkillInner(skId) {
                 if(!delayDone && t.curHp === t.hp && t.beh === '被動' && res.ranged) { t._delayTicks = 30; delayDone = true; }
                 t.curHp -= res.dmg;
                 t.justHit = getWpnEle(player.eq.wpn, wpn);
+                if (typeof reflectWallOnDamage === 'function') reflectWallOnDamage(t, res.dmg, res.ranged ? 'ranged' : 'melee', null);   // 🌑 v3.4.14 血壁空間：物理技能每擊反射（衝擊之暈/三重矢·玩家傭兵一致）
                 totalDmg += res.dmg;
                 let mark = (res.heavy && res.crit) ? '會心' : (res.crit ? '爆' : (res.heavy ? '重' : ''));
                 hitsLog.push(res.dmg + (mark ? '(' + mark + ')' : ''));
@@ -718,6 +721,7 @@ function castSkillInner(skId) {
                     _burstDmg += totalDmg;   // 🔧 魔爆累計
                     t.justHit = (sk.ele && sk.ele !== 'none') ? sk.ele : 'magic';
                     t._spellHurt = true;   // 🎬 v3.0.14 法術傷害→hurt 動畫(含頭目·renderMobs 頭目閘放行)
+                    if (typeof reflectWallOnDamage === 'function') reflectWallOnDamage(t, totalDmg, 'magic', null);   // 🌑 v3.4.14 血壁空間：傷害魔法技能（單體/全體）＝魔法反射（玩家傭兵一致）
                     let multiText = hitsLog.length > 1 ? `[${hitsLog.join(", ")}] (總和: ${totalDmg})` : `${totalDmg}`;
                     if (isCrit) multiText += " (爆擊!)";
                     totalDmgText.push(`對 <span class="${getMobColor(t.lv)}">${t.n}</span> 造成 <span class="${isCrit?'text-yellow-500 font-bold':'text-cyan-300'}">${multiText} 點傷害</span>`);

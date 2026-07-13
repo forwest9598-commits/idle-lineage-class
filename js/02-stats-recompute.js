@@ -787,6 +787,7 @@ function hasTeleportRing() {
 }
 // 傳送：清空當前怪物並重置生怪排程；forceBoss=true 時讓下一次生怪必定為 BOSS
 function doTeleport(forceBoss) {
+    if (typeof giltasKeepOnLeave === 'function') giltasKeepOnLeave();   // 🌑 v3.4.16 受詛咒聖地內瞬移＝清空重生怪物（吉爾塔斯消失重生）→ 視同離開戰鬥·先做 HP 保留判定（消耗完整的召喚球＋提示·helper 自帶地圖 gate）
     if (typeof playTeleportFx === 'function') { try { playTeleportFx(); } catch (e) {} }   // 🌀 v3.0.102 傳送術特效＋玩家 sprite 暫隱（傳送術技能/手動+自動瞬移卷軸皆經此）
     saveSiegeBossHp();   // 傳送前保存攻城塔/門血量
     mapState.mobs = [null, null, null, null, null];

@@ -890,6 +890,24 @@ function checkLvUp() {
     }
 }
 
+// 🌑 v3.4.16 吉爾塔斯 HP 保留（統一收口·用戶：戰鬥中「離開」也適用）：離開 受詛咒的黑暗妖精聖地 的所有路徑
+//    （回村/戰敗復活/切換地圖→changeMap js/11、瞬移→doTeleport js/02）皆呼叫本函式（內自帶地圖 gate·各路徑一次觸發不重複）。
+//    吉爾塔斯存活「且已受傷」＋身上有 完整的召喚球 → 消耗 1 顆、記錄 player.giltasKeep={hp}（js/03 spawnMob 還原·一次性）＋系統提示；
+//    沒有球 → 清除殘留紀錄（重進＝全新吉爾塔斯）；滿血未傷 → 不消耗（保留滿血＝重生等效·省球）。
+function giltasKeepOnLeave() {
+    if (!mapState || mapState.current !== 'cursed_dark_elf_sanctuary') return;
+    let _gb = mapState.mobs && mapState.mobs.find(m => m && m.n === '吉爾塔斯' && m.curHp > 0);
+    let _oi = player.inv.findIndex(i => i.id === 'item_summonorb_full' && (i.cnt || 1) >= 1);
+    if (_gb && _gb.curHp < _gb.hp && _oi >= 0) {
+        let _ob = player.inv[_oi];
+        if ((_ob.cnt || 1) > 1) _ob.cnt -= 1; else player.inv.splice(_oi, 1);
+        player.giltasKeep = { hp: Math.max(1, Math.floor(_gb.curHp)) };
+        logSys(`<span class="text-cyan-300">完整的召喚球碎裂，將吉爾塔斯的傷勢（剩餘 HP ${player.giltasKeep.hp.toLocaleString()}）封印在原地——直到你再次進入前，牠不會恢復。</span>`);
+        try { renderTabs(true); } catch (e) {}
+    } else if (player.giltasKeep) {
+        player.giltasKeep = null;   // 沒有完整的召喚球（或吉爾塔斯滿血）：清除殘留紀錄（重新進入＝全新吉爾塔斯）
+    }
+}
 function revive() {
     player.dead = false;
     player.statuses = { stun: 0, freeze: 0, stone: 0, poison: 0, poisonDmg: 0, poisonTick: 0, burn: 0, burnDmg: 0, burnTick: 0, scald: 0, scaldDmg: 0, scaldTick: 0, bleed: 0, bleedDmg: 0, bleedTick: 0, sleep: 0, silence: 0, paralyze: 0, magicseal: 0 };  // 復活清除所有異常(含中毒/灼燒/燙傷)，避免復活後立即被持續傷害再次擊殺
@@ -906,20 +924,7 @@ function revive() {
     }
     if (state.riftRun) riftEndRun();   // 🌀 裂痕內死亡：結算停留時間並產生待領獎勵
     if (state.oblivion) { state.oblivion = null; state._oblivionAdvance = false; }   // 🏝️ 旅程中死亡：回村並結束遺忘之島旅程
-    // 🌑 v3.3.33 吉爾塔斯（黑暗妖精聖地.md）：於受詛咒聖地戰敗回村時，身上有 完整的召喚球 → 消耗 1 顆並記錄其當前 HP（暫停回血）；
-    //    下次進入時由 js/03 spawnMob 還原（一次性）。沒有完整的召喚球＝不記錄→重新進入是全新的吉爾塔斯。
-    if (mapState.current === 'cursed_dark_elf_sanctuary') {
-        let _gb = mapState.mobs.find(m => m && m.n === '吉爾塔斯' && m.curHp > 0);
-        let _oi = player.inv.findIndex(i => i.id === 'item_summonorb_full' && (i.cnt || 1) >= 1);
-        if (_gb && _oi >= 0) {
-            let _ob = player.inv[_oi];
-            if ((_ob.cnt || 1) > 1) _ob.cnt -= 1; else player.inv.splice(_oi, 1);
-            player.giltasKeep = { hp: Math.max(1, Math.floor(_gb.curHp)) };
-            logSys(`<span class="text-cyan-300">完整的召喚球碎裂，將吉爾塔斯的傷勢（剩餘 HP ${player.giltasKeep.hp}）封印在原地——直到你再次進入前，牠不會恢復。</span>`);
-        } else if (player.giltasKeep) {
-            player.giltasKeep = null;   // 沒有完整的召喚球：清除殘留紀錄（重新進入＝全新吉爾塔斯）
-        }
-    }
+    // 🌑 v3.4.16 吉爾塔斯 HP 保留：改統一收口 giltasKeepOnLeave()——本函式尾端 changeMap(true) 會在切換地圖前觸發（回村/瞬移/切圖亦同一路徑），此處不再 inline 處理（避免雙重消耗）。
     // 👇 正確的新版起點邏輯
     let startMap = 'town_silver_knight';
     if (player.cls === 'mage') startMap = 'town_talking';

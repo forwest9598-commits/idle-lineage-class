@@ -1023,6 +1023,79 @@ function vfxBossEntrance(mob) {
     } catch (e) {}
 }
 
+// 🔥 v3.4.15 頭目狂暴爆發：沿用「頭目降臨」的戰場名條語言，改成猩紅閃光、衝擊環與火星。
+//   此函式只負責一次性視覺；持續氣焰由 .mob-raging CSS 控制，提示／進出狂暴狀態由 renderMobs 的轉場偵測負責。
+let _bossRageLast = {};
+function vfxBossRage(mob) {
+    try {
+        if (!mob || _vfxMute()) return;
+        let cfg = BOSS_ENTRANCE_FX[mob.n];
+        if (!cfg || !(Number(mob.rageHpPct) > 0)) return;
+        let now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        if (_bossRageLast[mob.uid] && now - _bossRageLast[mob.uid] < 1200) return;
+        _bossRageLast[mob.uid] = now;
+        let bv = document.getElementById('battle-view');
+        if (!bv || bv.classList.contains('hidden')) return;
+        let r = bv.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) return;
+        let layer = _vfxLayer();
+        let cx = r.left + r.width / 2, cy = r.top + r.height * 0.55;
+        let boxCss = 'position:absolute;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;pointer-events:none;border-radius:6px;';
+        let a = '#fb3b45', b = '#7f1018';
+
+        bv.classList.remove('vfx-bossshake'); void bv.offsetWidth; bv.classList.add('vfx-bossshake');
+        bv.addEventListener('animationend', () => bv.classList.remove('vfx-bossshake'), { once: true });
+
+        let flash = document.createElement('div');
+        flash.style.cssText = boxCss + 'mix-blend-mode:screen;background:radial-gradient(circle at 50% 55%, #fff1a8 0%, ' + a + 'cc 15%, ' + b + '99 42%, transparent 73%);';
+        layer.appendChild(flash);
+        flash.animate([{ opacity: 0 }, { opacity: 1, offset: .10 }, { opacity: .35, offset: .34 }, { opacity: 0 }], { duration: 1050, easing: 'ease-out' }).onfinish = () => flash.remove();
+
+        let vig = document.createElement('div');
+        vig.style.cssText = boxCss + 'background:radial-gradient(circle at 50% 55%, transparent 23%, rgba(70,0,8,.38) 54%, rgba(0,0,0,.88) 100%);';
+        layer.appendChild(vig);
+        vig.animate([{ opacity: 0 }, { opacity: 1, offset: .18 }, { opacity: 0 }], { duration: 1250, easing: 'ease-out' }).onfinish = () => vig.remove();
+
+        for (let i = 0; i < 4; i++) {
+            let ring = document.createElement('div');
+            ring.style.cssText = 'position:absolute;left:' + cx + 'px;top:' + cy + 'px;width:40px;height:40px;border-radius:50%;transform:translate(-50%,-50%);border:' + (5 - Math.min(i, 2)) + 'px solid ' + (i % 2 ? '#ffb347' : a) + ';box-shadow:0 0 26px ' + a + ',inset 0 0 16px ' + b + ';pointer-events:none;';
+            layer.appendChild(ring);
+            ring.animate([
+                { transform: 'translate(-50%,-50%) scale(.2)', opacity: .98 },
+                { transform: 'translate(-50%,-50%) scale(' + (8 + i * 3.4) + ')', opacity: 0 }
+            ], { duration: 780 + i * 145, delay: i * 95, easing: 'cubic-bezier(.12,.65,.24,1)' }).onfinish = () => ring.remove();
+        }
+
+        for (let i = 0; i < 18; i++) {
+            let spark = document.createElement('i');
+            let ang = (Math.PI * 2 * i / 18) + Math.random() * .28;
+            let dist = 75 + Math.random() * Math.min(210, r.width * .28);
+            let size = 3 + Math.random() * 5;
+            spark.style.cssText = 'position:absolute;left:' + cx + 'px;top:' + cy + 'px;width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:' + (i % 3 ? a : '#ffd166') + ';box-shadow:0 0 10px ' + a + ';pointer-events:none;';
+            layer.appendChild(spark);
+            spark.animate([
+                { transform: 'translate(-50%,-50%) scale(1.2)', opacity: 1 },
+                { transform: 'translate(calc(-50% + ' + Math.cos(ang) * dist + 'px),calc(-50% + ' + Math.sin(ang) * dist + 'px)) scale(.15)', opacity: 0 }
+            ], { duration: 620 + Math.random() * 520, delay: 90 + Math.random() * 180, easing: 'cubic-bezier(.14,.66,.28,1)' }).onfinish = () => spark.remove();
+        }
+
+        let banner = document.createElement('div');
+        banner.className = 'vfx-boss-banner vfx-rage-banner';
+        banner.style.left = cx + 'px';
+        banner.style.top = (r.top + r.height * .30) + 'px';
+        banner.style.color = '#ffb4b9';
+        banner.style.textShadow = '0 0 8px #fff1a8, 0 0 18px ' + a + ', 0 0 34px ' + b + ', 0 2px 5px #000';
+        banner.innerHTML = '<div class="vfx-boss-sub">◆　頭 目 狂 暴　◆</div><div class="vfx-boss-name">' + (cfg.label || mob.n) + '　陷入狂暴！</div>';
+        layer.appendChild(banner);
+        banner.animate([
+            { opacity: 0, transform: 'translate(-50%,-50%) scale(1.8)' },
+            { opacity: 1, transform: 'translate(-50%,-50%) scale(.96)', offset: .17 },
+            { opacity: 1, transform: 'translate(-50%,-50%) scale(1.04)', offset: .72 },
+            { opacity: 0, transform: 'translate(-50%,-50%) scale(1.14)' }
+        ], { duration: 1900, easing: 'ease-out' }).onfinish = () => banner.remove();
+    } catch (e) {}
+}
+
 // 🎚️ 戰鬥特效開關（僅標題畫面提供；遊戲中不再出現）：玩家選擇持久化於 localStorage，載入時套用到 window.__vfxOff
 const _VFX_PREF_KEY = 'lineage_vfx_off';
 const _VFX_NUM_PREF_KEY = 'lineage_vfx_num_off';   // 🔢 v3.0.2 「只關傷害數字」獨立偏好
@@ -1092,7 +1165,7 @@ function _renderMobsImpl() {
     if(state.ff) return; // 補跑期間不刷新畫面
     _initMobListGuard();
     if(_mobPointerDown) { _mobRebuildPending = true; return; }   // 🚀 按住怪物卡期間延後重繪→點擊切換目標不被中斷
-    let _slotHtmls = [], _forceHit = [];   // 🚀 改差異更新：先各格產生 html 字串，最後只重建有變動的格
+    let _slotHtmls = [], _forceHit = [], _rageTransitions = [];   // 🚀 改差異更新：先各格產生 html 字串，最後只重建有變動的格；狂暴只記錄「未啟用→啟用」轉場
     let _showMobEleFlag = (typeof _relicShowMobEle === 'function') && _relicShowMobEle();   // 🏺 巨大螞蟻的複眼：狀態直接顯示敵人屬性（一次計算·全格共用）
 
     let _back = backSlotsActive();                                   // 🆕 五格模式：原三格(前排)＋後排兩格
@@ -1116,6 +1189,11 @@ function _renderMobsImpl() {
             m.justHit = false;
             m._spellHurt = false;
 
+            // 🔥 頭目狂暴轉場：嚴格低於門檻且仍存活才啟用。丹特斯吸血回到門檻以上會解除，之後再次跌破可重新提示。
+            let _rageNow = m.curHp > 0 && typeof mobRageActive === 'function' && mobRageActive(m);
+            if (_rageNow && !m._rageFxActive) { m._rageFxActive = true; _rageTransitions.push(m); }
+            else if (!_rageNow && m._rageFxActive) m._rageFxActive = false;
+
             let _badgeTags = '';
             if(_showMobStatus && m.st) {   // 🩹 狀態開關關閉時不顯示異常狀態徽章
                 let order = ['freeze','stun','stone','sleep','blind','weaken','disease','vacuum','broken','slow','mrhalf','magicseal','fragile','armorbreak','confuse','panic','guardbreak','terror','doom'];   // 🔮 含脆弱、🔧 破甲(黑妖破壞盔甲)、🔮 混亂/恐慌、🐉 護衛毀滅/恐懼/死神；中毒不顯示、出血改用 🩸 emoji（見下方圖片下方列）
@@ -1128,6 +1206,7 @@ function _renderMobsImpl() {
             if(_showMobStatus && m._grace) _badgeTags = `<span class="px-1 rounded bg-red-950/80 grace-badge text-[10px] font-bold">席琳恩賜</span>` + (_badgeTags ? ' ' + _badgeTags : '');
             // 🔧 頭目標籤：BOSS 名字下方常駐金色「頭目」標籤（置於最前）；🩹 狀態開關關閉時亦隱藏
             if(_showMobStatus && m.boss) _badgeTags = `<span class="px-1 rounded bg-amber-900/80 text-amber-200 text-[10px] font-bold border border-amber-500/60">頭目</span>` + (_badgeTags ? ' ' + _badgeTags : '');
+            if(_showMobStatus && _rageNow) _badgeTags = `<span class="px-1 rounded text-[10px] font-bold border" style="color:#fecdd3;background:rgba(127,29,29,.88);border-color:#fb7185;text-shadow:0 0 5px #ef4444;">狂暴</span>` + (_badgeTags ? ' ' + _badgeTags : '');
             // 徽章列固定常駐（單行、固定高度），避免有/無狀態時背景框忽大忽小
             let badges = `<div class="flex justify-center gap-0.5 mb-1 overflow-hidden" style="height:18px;">${_badgeTags}</div>`;
             // 🩹 狀態列（出血/猛爆毒/鈍擊/硬皮）：狀態開關關閉時清空內容（保留固定高度列避免版面跳動）
@@ -1160,7 +1239,7 @@ function _renderMobsImpl() {
             // ⚔️ v2.7.40 第二武器層(_w2·如伊弗利特雙武器/雙火焰)：與 _w 同機制·再疊一層 .mob-anim-weapon2
             let _weaponFx2 = MOB_ANIM_NAMES.has(m.n) && (typeof MOB_ANIM_WEAPON_FX2 !== 'undefined') && MOB_ANIM_WEAPON_FX2.has(m.n);
             let _weaponLayer2 = _weaponFx2 ? `<img class="mob-anim-weapon2 w-24 h-24 p-1 object-contain pointer-events-none" src="assets/anim/${_animDir(m.n)}/idle_w2_0.png" alt="" aria-hidden="true" onload="this.style.display='';this.style.visibility=''" onerror="this.style.visibility='hidden'">` : '';
-            _slotHtmls[_k] = `<div class="mob-target ${act}${_rowCls}${BOSS_BIG_MAPS.includes(mapState.current) ? ' boss-slot' : (m.boss ? ' boss-zoom' : '')}${_sfCls}" data-uid="${m.uid}"${_scat}>
+            _slotHtmls[_k] = `<div class="mob-target ${act}${_rageNow ? ' mob-raging' : ''}${_rowCls}${BOSS_BIG_MAPS.includes(mapState.current) ? ' boss-slot' : (m.boss ? ' boss-zoom' : '')}${_sfCls}" data-uid="${m.uid}"${_scat}>
                         <div class="flex justify-center items-center text-sm mb-1 mob-name">
                             <span class="${getMobNameClass(m)}" title="${m.n}">${m.n}</span>${(_showMobEleFlag && m.e && m.e !== 'none') ? ` <span class="text-[11px] font-bold" style="margin-left:3px;color:${(typeof RELIC_ELE_COLOR !== 'undefined' && RELIC_ELE_COLOR[m.e]) || '#cbd5e1'};" title="敵人屬性（巨大螞蟻的複眼）">[${(typeof RELIC_ELE_LABEL !== 'undefined' && RELIC_ELE_LABEL[m.e]) || ''}]</span>` : ''}
                         </div>
@@ -1206,6 +1285,15 @@ function _renderMobsImpl() {
         //    但被重建過的格會丟失 hover class，故只在「有寫入 DOM」時重新套用一次（無重建的幀維持原樣、零成本）。
         if (_wrote) _applyHoverName();
         if (_wrote) { try { _mobAnimApply(); } catch(e){} }   // 🎞️ 重建過的格子立即補上當前動畫幀（同一同步工作內→不閃回靜態圖）
+    }
+    // 🔥 訊息與一次性爆發只在轉場發生時觸發；持續光暈由上方 mob-raging class 維持。
+    for (let m of _rageTransitions) {
+        try {
+            let hitUp = Math.max(0, Math.round(((Number(m.rageHitMult) || 1) - 1) * 100));
+            let dmgUp = Math.max(0, Math.round(((Number(m.rageDmgMult) || 1) - 1) * 100));
+            if (typeof logCombat === 'function') logCombat(`<span class="font-bold" style="color:#fecdd3;text-shadow:0 0 7px #ef4444;">【頭目狂暴】</span><span class="${getMobColor(m.lv)}">${m.n}</span> 的力量失控！命中提升 ${hitUp}%、傷害提升 ${dmgUp}%！`, 'enemy', 'enemy');
+        } catch(e) {}
+        try { vfxBossRage(m); } catch(e) {}
     }
     try { _vfxFlush(); } catch(e){}   // ✨ VFX：格子重建後生成飄動傷害數字
 }
