@@ -219,6 +219,26 @@ function summonTierByLevel(lv) {
 }
 function buildSummon(skId, def, durSec, owner) {
     owner = owner || player;   // 🩸 v2.6.25 owner 參數化：分階依 owner.lv、屬性精靈依 owner.elfEle（傭兵召喚共用）
+    // 🧙 v3.3.23 傭兵召喚術改用玩家 v2 傷害模型（抽象輸出·不上場）：依傭兵等級＋召喚控制戒指選怪（SUMMON_TIERS）·每攻擊週期打 count 隻份 v2 傷害。玩家 sk_summon 走 js/23 v2 實體制不經此；此分支只作用於傭兵(owner!==player)。無法召喚(等級/魅力不足)則落回下方舊分階模型。
+    if (skId === 'sk_summon' && owner !== player && typeof mercSummonV2Plan === 'function') {
+        let _plan = mercSummonV2Plan(owner);
+        if (_plan) {
+            let _d0 = _sumDerive({ form: _plan.form, n: _plan.form }, owner);
+            return { skId: skId, n: _plan.form + ' ×' + _plan.count, _v2form: _plan.form, _v2count: _plan.count, _v2lv: _plan.lv,
+                interval: _d0.aspd || 20, cd: _d0.aspd || 20, kind: 'v2', ele: 'none', dmgDice: [1, 1], dmgDiv: 5, dmgLvDiv: 0, elemScale: 20, dmgMult: 1, hardSkinPen: 0, mrPenBase: 0, hitLvOff: 0, proc: null,
+                endTick: state.ticks + (durSec || 3600) * 10 };
+        }
+    }
+    // 🧟 v3.3.24 傭兵造屍術改用玩家 v2 傷害模型（抽象輸出·不上場）：殭屍階級依傭兵等級（_zmbTierForPlayer）·單隻·每週期 1 刀 v2 傷害（_zmbDerive）。等級不足回 null 則落回下方舊模型。
+    if (skId === 'sk_zombie' && owner !== player && typeof _zmbTierForPlayer === 'function') {
+        let _zt = _zmbTierForPlayer(owner);
+        if (_zt) {
+            let _zd = _zmbDerive({ lv: _zt.lv, skId: 'sk_zombie' }, owner);
+            return { skId: skId, n: '人形殭屍 Lv.' + _zt.lv, _v2form: '人形殭屍', _v2zmb: true, _v2count: 1, _v2lv: _zt.lv,
+                interval: _zd.aspd || 12, cd: _zd.aspd || 12, kind: 'v2', ele: 'none', dmgDice: [1, 1], dmgDiv: 5, dmgLvDiv: 0, elemScale: 20, dmgMult: 1, hardSkinPen: 0, mrPenBase: 0, hitLvOff: 0, proc: null,
+                endTick: state.ticks + (durSec || 3600) * 10 };
+        }
+    }
     let base = def.tiered ? summonTierByLevel(owner.lv) : def;
     let ele = base.ele || 'none';
     if(def.eleFromPlayer) ele = owner.elfEle || 'none';
@@ -240,6 +260,16 @@ function buildSummon(skId, def, durSec, owner) {
 }
 function refreshSummonBalance(sm, owner) {
     owner = owner || player;
+    if (sm && sm._v2zmb) {   // 🧟 v3.3.24 傭兵造屍術 v2：讀檔後依當前等級重算殭屍階級與攻速（抽象輸出·無 dmgDice）
+        let _zt = (typeof _zmbTierForPlayer === 'function') ? _zmbTierForPlayer(owner) : null;
+        if (_zt) { let _zd = _zmbDerive({ lv: _zt.lv, skId: 'sk_zombie' }, owner); sm._v2lv = _zt.lv; sm.interval = _zd.aspd || 12; sm.n = '人形殭屍 Lv.' + _zt.lv; }
+        return sm;
+    }
+    if (sm && sm._v2form) {   // 🧙 v3.3.23 傭兵召喚術 v2：讀檔後依當前等級/魅力/戒指重算選怪與攻速（抽象輸出·無 dmgDice·避免被下方舊分階模型洗回）
+        let _plan = (typeof mercSummonV2Plan === 'function') ? mercSummonV2Plan(owner) : null;
+        if (_plan) { let _d0 = _sumDerive({ form: _plan.form, n: _plan.form }, owner); sm._v2form = _plan.form; sm._v2count = _plan.count; sm._v2lv = _plan.lv; sm.interval = _d0.aspd || 20; sm.n = _plan.form + ' ×' + _plan.count; }
+        return sm;
+    }
     if(!sm || !sm.skId || !DB.skills[sm.skId] || !DB.skills[sm.skId].summon) return sm;
     let def = DB.skills[sm.skId].summon;
     let base = def.tiered ? summonTierByLevel(owner.lv) : def;
@@ -2315,7 +2345,7 @@ function mercRehireMult(lv) {
     return (lv <= 50) ? 0.1 * Math.pow(2, (lv - 1) / 49) : 0.2 * Math.pow(2.5, (lv - 50) / 50);
 }
 function mercRehireCost(lv) { return Math.floor((lv || 1) * 10000 * mercRehireMult(lv)); }   // 重新招募費用 = 原價(lv×10000) × 曲線費率
-// 🤝 v2.6.72 重新招募：一鍵「結算累積經驗（記入待領帳本）＋以來源存檔最新狀態重建戰力快照」，取代原「解除」按鈕（單獨解散改用 全員退出）
+// 🤝 v2.6.72 重新招募：一鍵「結算累積經驗（記入待領帳本）＋以來源存檔最新狀態重建戰力快照」。個別解散另由 dismissAlly 處理。
 function rehireAlly(slotN) {
     slotN = String(slotN);
     let cur = (player.allies || []).find(a => a && a._slot === slotN);
@@ -2502,6 +2532,19 @@ function toggleAlly(slotN) {
     saveGame(); updateUI();
     let _c = document.getElementById('interaction-content'); if(_c) renderAllyNPC(_c);
 }
+// 🤝 個別解散：保留重新招募按鈕，僅解除指定傭兵；實際經驗結算、存檔與畫面更新沿用 toggleAlly 的既有流程。
+function dismissAlly(slotN) {
+    slotN = String(slotN);
+    let ally = (player.allies || []).find(a => a && String(a._slot) === slotN);
+    if (!ally) {
+        logSys(`<span class="text-slate-400">存檔 ${slotN} 的協力傭兵目前不在隊伍中。</span>`);
+        let _c0 = document.getElementById('interaction-content'); if (_c0) renderAllyNPC(_c0);
+        return;
+    }
+    let name = ally._allyName || `存檔 ${slotN}`;
+    if (!confirm(`確定要解散協力傭兵「${name}」嗎？\n（招募費用不退還，累積經驗會記入待領帳本，該角色下次載入或回村時領取）`)) return;
+    toggleAlly(slotN);
+}
 function renderAllyNPC(div) {
     let rows = allySlotList().map(n => {
         let sum = slotSummary(n);
@@ -2512,7 +2555,10 @@ function renderAllyNPC(div) {
         let _tag = _classic ? '<span style="color:#fbbf24;font-weight:bold;">⚔經典</span> ' : '';
         let _nameStyle = _classic ? 'style="color:#fbbf24;"' : 'class="text-amber-300"';
         let _btn = active
-            ? `<button onclick="rehireAlly('${n}')" class="btn py-1 px-4 text-sm font-bold bg-sky-900 border-sky-700 text-sky-200" title="結算累積經驗（記入待領帳本，該角色下次載入或回村時領取）並以最新存檔重建戰力快照">重新招募　${mercRehireCost(sum.lv || 1).toLocaleString()}金</button>`
+            ? `<div class="flex flex-wrap justify-end gap-1.5 shrink-0">
+                    <button onclick="rehireAlly('${n}')" class="btn py-1 px-3 text-sm font-bold bg-sky-900 border-sky-700 text-sky-200" title="結算累積經驗（記入待領帳本，該角色下次載入或回村時領取）並以最新存檔重建戰力快照">重新招募　${mercRehireCost(sum.lv || 1).toLocaleString()}金</button>
+                    <button onclick="dismissAlly('${n}')" class="btn py-1 px-3 text-sm font-bold bg-red-950 border-red-700 text-red-200" title="只解散這名協力傭兵（招募費用不退還，累積經驗會記入待領帳本）">解散</button>
+               </div>`
             : (_modeMatch
                 ? `<button onclick="toggleAlly('${n}')" class="btn py-1 px-4 text-sm font-bold bg-emerald-900 border-emerald-700 text-emerald-200">召喚　${((sum.lv||1)*10000).toLocaleString()}金</button>`
                 : `<span class="text-xs text-slate-500 px-2 text-right">非同模式存檔<br>不可招募</span>`);
@@ -2531,7 +2577,7 @@ function renderAllyNPC(div) {
         </div>`;
     }).join('');
     div.innerHTML = `<div class="flex flex-col gap-3 p-1">
-        <div class="text-slate-300 text-sm leading-relaxed">招募其他存檔位的角色一起作戰，<b class="text-amber-300">費用＝該角色等級 × 10000 金幣</b>。協力傭兵戰鬥中不會陣亡，<b class="text-emerald-300">你死亡並回城／原地復活後仍會留在身邊，只有點「⚠ 全員退出」才會解散（費用不退還）</b>；存讀檔不會使其消失。法師以魔法、妖精以弓/三重矢、騎士以物理（含看破/殺戮）出手。<br><span class="text-slate-400">提示：點「重新招募」可隨時結算傭兵累積經驗（記入待領帳本）並以最新存檔更新戰力快照；費用依等級為原價的 1/10（Lv1）~ 1/5（Lv50）~ 1/2（Lv100）曲線遞增。</span></div>
+        <div class="text-slate-300 text-sm leading-relaxed">招募其他存檔位的角色一起作戰，<b class="text-amber-300">費用＝該角色等級 × 10000 金幣</b>。協力傭兵戰鬥中不會陣亡，<b class="text-emerald-300">你死亡並回城／原地復活後仍會留在身邊，可使用各傭兵旁的「解散」或「⚠ 全員退出」（費用不退還）</b>；存讀檔不會使其消失。法師以魔法、妖精以弓/三重矢、騎士以物理（含看破/殺戮）出手。<br><span class="text-slate-400">提示：點「重新招募」可隨時結算傭兵累積經驗（記入待領帳本）並以最新存檔更新戰力快照；點「解散」只會解除該名傭兵並結算其累積經驗。重新招募費用依等級為原價的 1/10（Lv1）~ 1/5（Lv50）~ 1/2（Lv100）曲線遞增。</span></div>
         <div class="flex items-center justify-between gap-2">
             <div class="text-sm">你的金幣：<span class="text-yellow-400 font-bold">${(player.gold||0).toLocaleString()}</span></div>
             ${(player.allies||[]).length ? `<button onclick="dismissAllAllies()" class="btn py-1 px-3 text-xs font-bold bg-red-950 border-red-700 text-red-200" title="解除目前全部協力傭兵（含異常卡住、找不到對應存檔的傭兵）">⚠ 全員退出（${(player.allies||[]).length}）</button>` : ''}

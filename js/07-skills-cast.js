@@ -37,6 +37,21 @@ function summonHitValue(sm, owner, target, gearHit) {
 function summonAttack(sm, owner) {
     owner = owner || player;   // 🩸 v2.6.25 owner 參數化：owner=player（預設·玩家召喚）或 ally（傭兵召喚）；讀 owner.d.cha/lv/mastery/eq，killMob 仍歸真隊長（不換身）
     if(!sm) return;
+    // 🧙 v3.3.23 傭兵召喚術／🧟 v3.3.24 造屍術 v2 抽象輸出：本體不上場（無血條/不被攻擊）·每攻擊週期對目標打 count 隻份的玩家 v2 傷害（召喚術含 water bubble 等 proc·造屍術 '人形殭屍' 不在 SUMMON_TIERS→proc 自動略過）；擊殺歸真隊長（summonV2AttackOnce 內 killMob·不換身）。
+    if(sm._v2form && typeof summonV2AttackOnce === 'function') {
+        let _s0, _d;
+        if(sm._v2zmb) {   // 🧟 造屍術：依殭屍階級 lv 走 _zmbDerive
+            _s0 = { skId: 'sk_zombie', form: sm._v2form, lv: sm._v2lv || 10 };
+            _d = _zmbDerive(_s0, owner);
+        } else {          // 🧙 召喚術：SUMMON_TIERS 選怪 → _sumDerive
+            let _lvm = _sumTierOf(sm._v2form);
+            _s0 = { skId: 'sk_summon', form: sm._v2form, lv: (_lvm && _lvm.mob && _lvm.mob.lv) || sm._v2lv || 1 };
+            _d = _sumDerive({ form: sm._v2form, n: sm._v2form }, owner);
+        }
+        let _cnt = Math.max(1, sm._v2count || 1);
+        for(let i = 0; i < _cnt; i++) { let _t = getTarget(); if(!_t) break; summonV2AttackOnce(_s0, _d, _t, owner); }
+        return;
+    }
     let t = getTarget(); if(!t) return;
     let cha = (owner.d && owner.d.cha) || 0;
     let _sgb = (typeof summonGearBonus === 'function') ? summonGearBonus(owner) : { dmg: 0, hit: 0 };   // 🏺 喚獸師的訓練鞭：召喚物額外傷害/命中（掃 owner 裝備欄）
