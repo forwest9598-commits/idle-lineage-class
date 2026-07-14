@@ -141,12 +141,12 @@ function petCharmCombatBonus() {
     let v = Math.floor(cha * 0.10);
     return { dmg: v, hit: v };
 }
-// 👑 v3.4.29 王族「夥伴精通」(k_royal_pet)（用戶指定）：出戰寵物 傷害 ×1.5、命中 ×1.5、受到傷害 −30%。
+// 👑 v3.4.36 王族「夥伴精通」(k_royal_pet)（用戶指定）：出戰寵物 傷害 ×1.5、命中 ×1.5、受到傷害 −50%（v3.4.29 為 −30%）。
 //   HP 不再有加成（v3.4.28 的「HP 上限 ×2」已取消·petEffMaxHp 一併移除→各處回頭直接讀存檔值 p.mhp）。
 function petMasteryOn()        { return (typeof hasMastery === 'function') && hasMastery('k_royal_pet'); }
 function petMasteryDmgMult()   { return petMasteryOn() ? 1.5 : 1; }   // 折進 petDerive 的 damageMult＝普攻／傷害技能／extra 技三路徑一次覆蓋
 function petMasteryHitMult()   { return petMasteryOn() ? 1.5 : 1; }   // 折進 petDerive 的 hit＝命中判定（petAttackOnce）與保管清單顯示一次覆蓋
-function petMasteryTakenMult() { return petMasteryOn() ? 0.7 : 1; }   // 受到傷害 −30%：掛怪物普攻／怪物魔法兩處（與 teamDmgReduceMult 同列；DoT 依既有設計為固定真傷·不受任何減免）
+function petMasteryTakenMult() { return petMasteryOn() ? 0.5 : 1; }   // 受到傷害 −50%：掛怪物普攻／怪物魔法兩處（與 teamDmgReduceMult 同列；DoT 依既有設計為固定真傷·不受任何減免）
 // 🎬 v3.2.73 寵物/召喚物 sprite 動作動畫單一設定點：背景補跑(state.ff)期間不設 _animAct→切分頁回來不會全隊寵/召同步爆播（比照 v3.2.72 _mobAnimTrigger 對怪物的處理）。
 //   死亡不需另播——渲染層 _petAnimApply 對 _downed 者以 _animAct.t||0 推算→無 _animAct 時直接 hold 死亡末幀（顯示倒地）。共用於 js/22（寵物）與 js/23（召喚物·同欄位協定）。
 function _petAnimAct(o, k, faceUid) {
@@ -882,7 +882,7 @@ function enemyAttackPet(mob, p) {
     if (mob._sherine) dmg = Math.floor(dmg * (mob._sherineMad ? 3 : 2));
     if (mob._grace) dmg = Math.floor(dmg * 1.5);
     dmg -= d.dr;
-    dmg = Math.floor(Math.max(1, dmg) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult() : 1) * petMasteryTakenMult());   // 👑 夥伴精通：受到傷害 −30%
+    dmg = Math.floor(Math.max(1, dmg) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult() : 1) * petMasteryTakenMult());   // 👑 夥伴精通：受到傷害 −50%
     dmg = Math.max(1, Math.floor(dmg * riftDamageMult()));
     p.hp -= dmg;
     _petAnimAct(p, 'hurt');
@@ -919,7 +919,7 @@ function applyMobMagicToPet(mob, sk, p) {
     let extra = (sk.db || 0) + (sk.dbLv ? (mob.lv || 0) * (sk.dbLvMult || 1) : 0);
     let dmg = sk.fixedDmg ? (baseM + extra) : (Math.floor((baseM + extra) * mrMult(mr)) - (d.dr || 0));
     if (st.freeze > 0 && sk.ext_freeze) { dmg += sk.ext_freeze; if (sk.extUnfreeze) st.freeze = 0; }
-    dmg = Math.max(1, Math.floor(Math.max(1, dmg * shMul) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult() : 1) * petMasteryTakenMult()));   // 👑 夥伴精通：受到傷害 −30%
+    dmg = Math.max(1, Math.floor(Math.max(1, dmg * shMul) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult() : 1) * petMasteryTakenMult()));   // 👑 夥伴精通：受到傷害 −50%
     dmg = Math.max(1, Math.floor(dmg * riftDamageMult()));
     p.hp -= dmg; _petAnimAct(p, 'hurt');
     if (!p._stunCycle) { p._atkCd = (p._atkCd || 0) + d.stunTicks; p._stunCycle = true; }
