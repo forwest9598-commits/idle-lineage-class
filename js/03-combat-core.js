@@ -139,8 +139,10 @@ function gameLoop() {
         state.ff = false;   // 保證即使 tick() 拋例外也會解除補跑旗標，避免畫面/出怪永久凍結
         state.inTick = false;
         settleDeadMobs();   // 保底：例外中斷時也完成清算
+        _tickDebt -= ran * TICK_MS;   // 只扣真正跑掉的 tick；未跑完的留待下一個迴圈繼續補
+        //   ⚠️ 必須在 finally 內：若 tick() 拋例外（如某傭兵技能的程式錯誤），這行原本會被跳過→已跑掉的 tick 沒從時間帳扣掉
+        //   → _tickDebt 只增不減、owed 越滾越大，每次迴圈都重跑一次巨量補跑再度拋例外＝遊戲時間永遠追不平、畫面卡住。
     }
-    _tickDebt -= ran * TICK_MS;   // 只扣真正跑掉的 tick；未跑完的留待下一個迴圈繼續補
 
     // 將這次補跑的淨增量併入累積（以前後數量差計算，含被消耗者的負值，最終只輸出淨正值）
     const _invAfter = {};
@@ -1066,7 +1068,7 @@ function procLightArrow(t) {
     if (hasMastery('m_resonance')) d = Math.max(1, d + 5);   // 🏅 共鳴精通：光箭傷害 +5
     if (typeof equipSkillDmgMult === 'function') d = Math.max(1, Math.floor(d * equipSkillDmgMult(sk, 'sk_lightarrow')));   // 🏺 v3.2.42 稽核修：共鳴光箭也吃技能傷害倍率遺物（光束強化魔杖 skillDmgMult 自身 proc 原本不生效）
     d = Math.max(1, Math.floor(d * rlFuryMult()));   // 🔮 紅獅5/5＋😡狂怒5/5：最終傷害
-    d = illusionMagicDmg(d, false);   // 🔮 幻覺2/5：共鳴光箭命中回MP（自動攻擊衍生→5件不加倍）
+    d = illusionMagicDmg(d, false);   // 🔮 共鳴本身已有回魔，不觸發幻覺2/5與5/5
     t.curHp -= d;
     t.justHit = 'magic';
     if (t.st && t.st.mrhalf > 0) t.st.mrhalf = 0;

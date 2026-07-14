@@ -311,7 +311,7 @@ function stormBuffTick(sk, noMageBonus) {
     let canFreeze = (sk.freezeHitOff !== undefined);
     let glow = STORM_ELE_GLOW[sk.ele] || STORM_ELE_GLOW.none;
     let dmgLog = [], frozeLog = [];
-    targets.forEach(t => {
+    targets.forEach((t, _illusionIdx) => {
         if (t.curHp <= 0) return;
         let isCrit = Math.random() * 100 < (player.d.magicCrit || 0);
         let critMult = isCrit ? (1 + (player.d.magicCritDmg || 0) / 100) : 1.0;
@@ -325,7 +325,7 @@ function stormBuffTick(sk, noMageBonus) {
         d = Math.floor(d * mageDmgMult);
         d = Math.max(1, Math.floor(d * rlFuryMult()));   // 🔮 紅獅5/5＋😡狂怒5/5 最終傷害
         d = Math.max(1, Math.floor(d * fragileMult(t) * wpnEnFinalMult(player.eq && player.eq.wpn)));    // 🔮 脆弱（白鳥5）；🔧 武器強化 +11~+20 最終倍率（魔法 DoT，與玩家傷害魔法 castSkill 一致）
-        d = illusionMagicDmg(d, true); t.curHp -= d; t.justHit = (sk.ele && sk.ele !== 'none') ? sk.ele : 'magic'; mobWake(t);   // 🔮 幻覺2/5回MP＋5/5：冰雪颶風/火牢 DoT 二次傷害
+        d = illusionMagicDmg(d, true, _illusionIdx === 0); t.curHp -= d; t.justHit = (sk.ele && sk.ele !== 'none') ? sk.ele : 'magic'; mobWake(t);   // 🔮 幻覺2件每次法術僅回一次MP；5件仍逐目標二次傷害
         dmgLog.push(`<span class="${getMobColor(t.lv)}">${t.n}</span> ${d}${isCrit ? '(爆)' : ''}`);
         if (t.curHp <= 0) {
             let ri = mapState.mobs.findIndex(x => x && x.uid === t.uid); if (ri !== -1) killMob(ri);
@@ -433,6 +433,7 @@ function weaponSpellProc(target, attackHit) {
                 let dmg = Math.floor(core * mrMult(effMr));
                 dmg = Math.max(1, Math.floor(Math.max(1, dmg) * fragileMult(t) * elementCounterMult('water', t.e)));   // ⚔️ 屬性剋制 ×1.4(剋)/×0.6(被剋)
                 if (t.st && t.st.mrhalf > 0) t.st.mrhalf = 0;
+                dmg = illusionMagicDmg(dmg, true);   // 🔮 幻覺2/5回MP＋5/5：紅惡靈逆襲屬免費觸發魔法
                 let _hl = Math.floor(dmg * 0.10);
                 t.curHp -= dmg; t.justHit = 'water'; mobWake(t);
                 player.hp = Math.min(player.mhp, player.hp + _hl);
@@ -477,14 +478,14 @@ function equipSkillDmgMult(sk, skId, who) {
     return m;
 }
 // 🔧 免費施放傷害魔法（不耗MP/不需學習）：武器觸發取武器權重階級，其餘來源取技能本身階級。
-function procFreeMagicSkill(t, skId, en, areaHit, sourceItem) {
+function procFreeMagicSkill(t, skId, en, areaHit, sourceItem, illusionRecoverMp) {
     let sk = DB.skills[skId];
     if (!sk || !t || t.curHp <= 0) return;
     if (sk.target === 'all' && !areaHit) {
         let uids = mapState.mobs.filter(m => m && m.curHp > 0 && !m._dead).map(m => m.uid);
-        uids.forEach(uid => {
+        uids.forEach((uid, i) => {
             let mob = mapState.mobs.find(m => m && m.uid === uid && m.curHp > 0 && !m._dead);
-            if (mob) procFreeMagicSkill(mob, skId, en, true, sourceItem);
+            if (mob) procFreeMagicSkill(mob, skId, en, true, sourceItem, i === 0);
         });
         return;
     }
@@ -510,6 +511,7 @@ function procFreeMagicSkill(t, skId, en, areaHit, sourceItem) {
     });
     total = Math.floor(total * enhanceWpnFinalMult(en, player.eq.wpn && DB.items[player.eq.wpn.id]));   // 🔧 武器強化 +11~+20：最終傷害倍率（取代舊 (1+強化/20)）
     if (total > 0) total = Math.max(1, Math.floor(total * equipSkillDmgMult(sk, skId)));   // 🏺 遺物 特定技能傷害倍率（觸發路徑：冰之女王魔杖觸發的冰錐等亦吃暴走兔胡蘿蔔 ×1.5）
+    if (total > 0) total = illusionMagicDmg(total, true, illusionRecoverMp !== false);   // 🔮 全體免費施法只在第一個目標回MP；5件仍逐目標生效
     if (total > 0) {
         t.curHp -= total; t.justHit = (sk.ele && sk.ele !== 'none') ? sk.ele : 'magic'; t._spellHurt = true; mobWake(t);   // 🎬 v3.0.14 法術傷害→hurt(含頭目)
         if(typeof playSpellFx === 'function') { try { playSpellFx(sk.n, t); } catch(e){} }   // ⚡ v2.7.16 娃娃/寵物免費施放(如娃娃克特/聖伯納→極道落雷)也疊法術特效
@@ -586,7 +588,7 @@ function allyDollDamageReduced(ally, dmg) {
     return dmg;
 }
 // 單體：對 t 計算並套用一次附魔施放傷害（不負責 render；回傳是否擊殺）。aoe 由 procWeaponSpell 統一在外層迴圈處理。
-function _procWeaponSpellHit(t, sp, en) {
+function _procWeaponSpellHit(t, sp, en, illusionRecoverMp) {
     if (!t || t.curHp <= 0) return false;
     let _procWpn = player.eq.wpn && DB.items[player.eq.wpn.id];
     let core = magicBaseDamage(roll(sp.dice[0], sp.dice[1]), player.d, sp.flat || 0, true) * weaponMagicDamageCoef(player.d, _procWpn, t, sp.ele);
@@ -599,7 +601,7 @@ function _procWeaponSpellHit(t, sp, en) {
     d = Math.max(1, Math.floor(d * enhanceWpnFinalMult(en, player.eq.wpn && DB.items[player.eq.wpn.id])));   // 🔧 武器強化 +11~+20：最終傷害倍率（取代舊 (1+強化/20)·與一般武器一致）
     d = Math.max(1, Math.floor(d * rlFuryMult()));   // 🔮 紅獅5/5＋😡狂怒5/5 最終傷害
     if (t.st && t.st.mrhalf > 0) t.st.mrhalf = 0;
-    d = illusionMagicDmg(d, true);   // 🔮 幻覺2/5回MP＋5/5：武器附魔施放魔傷二次傷害
+    d = illusionMagicDmg(d, true, illusionRecoverMp !== false);   // 🔮 全體 spellProc 只在第一個目標回MP；5件仍逐目標生效
     t.curHp -= d;
     t.justHit = (sp.ele && sp.ele !== 'none') ? sp.ele : 'magic';
     t._spellHurt = true;   // 🎬 v3.0.14 法術傷害→hurt(含頭目)
@@ -626,7 +628,7 @@ function procWeaponSpell(t, sp, en) {
     if (sp.aoe) {
         // 🔧 地獄火：對敵方全體各自施放（每隻獨立計算魔防/剋屬性）。以 uid 快照避免 killMob 改動 mapState.mobs 索引造成漏算。
         let uids = mapState.mobs.filter(m => m && m.curHp > 0).map(m => m.uid);
-        uids.forEach(uid => { let mob = mapState.mobs.find(m => m && m.uid === uid && m.curHp > 0); if (mob) _procWeaponSpellHit(mob, sp, en); });
+        uids.forEach((uid, i) => { let mob = mapState.mobs.find(m => m && m.uid === uid && m.curHp > 0); if (mob) _procWeaponSpellHit(mob, sp, en, i === 0); });
         if (!state.ff) renderMobs();
         return;
     }
@@ -697,12 +699,13 @@ function allyBuffDmgReduceMult(ally) {
     if (ally && ally._setFury5) m *= (1 - allyFuryRageRatio(ally));   // 😡 狂怒 5/5：依失血最多 -20%
     return m;
 }
-// 🔮 幻覺套裝魔法傷害鉤子：2件→魔傷命中回「Lv/10」MP；5件→「非自動攻擊」的魔法技能傷害再受一次同傷（以 ×2 實現·防遞迴·額外傷害不再觸發套裝效果）。
-//   isSkill=true：主動施放傷害魔法／輔助技DoT(冰雪颶風/火牢/立方)／武器觸發魔傷／魔爆 → 可被5件加倍；false：共鳴光箭等「自動攻擊衍生」→ 只回MP不加倍。
-function illusionMagicDmg(dmg, isSkill) {
-    if (!player || dmg <= 0) return dmg;
-    if (player._setIllusion2) { let r = Math.floor((player.lv || 1) / 10); if (r > 0) player.mp = Math.min(player.mmp, player.mp + r); }   // 2件：回 Lv/10 MP
-    if (player._setIllusion5 && isSkill) dmg = dmg * 2;   // 5件：非自動攻擊魔法技能傷害加倍（＝再受一次同傷）
+// 🔮 幻覺套裝魔法傷害鉤子：「非自動攻擊法術」＝不能在攻擊技能下拉選單選擇的傷害來源。
+//   canTrigger=true：立方(和諧/燃燒)、冰雪颶風/火牢 DoT、魔爆、spellProc、procSkill 等免費觸發魔法；false：一般傷害法術、共鳴與反射。
+//   2件→每次法術事件回一次「Lv/10」MP（AOE 不逐目標回）；5件→每個目標再受一次同傷（以 ×2 實現·防遞迴）。
+function illusionMagicDmg(dmg, canTrigger, recoverMp) {
+    if (!player || dmg <= 0 || !canTrigger) return dmg;
+    if (player._setIllusion2 && recoverMp !== false) { let r = Math.floor((player.lv || 1) / 10); if (r > 0) player.mp = Math.min(player.mmp, player.mp + r); }   // 2件：每次法術事件回一次 Lv/10 MP
+    if (player._setIllusion5) dmg = dmg * 2;   // 5件：符合條件的非自動攻擊法術傷害加倍（＝再受一次同傷）
     return dmg;
 }
 
