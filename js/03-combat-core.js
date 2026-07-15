@@ -122,6 +122,7 @@ function gameLoop() {
     const _goldBefore = player.gold;
 
     state.ff = true;
+    state.ffSmall = owed <= 20;   // 🩹 v3.4.49 「小補跑」旗標(≤2秒)：前景微卡頓(GC/存檔LZ壓縮/開大面板)也會觸發 owed>=2 補跑，該批擊殺原本被 vfxKill 的 ff 閘全部瞬消（用戶回報「死亡動畫有時不播」主因）。小批次放行死亡殘影(仍受 _deathGhostCount<12 節流)；長背景補跑維持全靜音免回前景爆量。
     state.inTick = true;   // 🔧 架構#2：補跑期間同樣每個 tick 結束才清算死亡
     let ran = 0;
     try {
@@ -137,6 +138,7 @@ function gameLoop() {
         }
     } finally {
         state.ff = false;   // 保證即使 tick() 拋例外也會解除補跑旗標，避免畫面/出怪永久凍結
+        state.ffSmall = false;   // 🩹 v3.4.49 小補跑旗標一併復位
         state.inTick = false;
         settleDeadMobs();   // 保底：例外中斷時也完成清算
         _tickDebt -= ran * TICK_MS;   // 只扣真正跑掉的 tick；未跑完的留待下一個迴圈繼續補
