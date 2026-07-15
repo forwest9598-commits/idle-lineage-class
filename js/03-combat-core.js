@@ -1476,11 +1476,13 @@ function witchIceLance() {
     if (t.curHp <= 0) { let ri = mapState.mobs.findIndex(m => m && m.uid === t.uid); if (ri !== -1) killMob(ri); }
     else renderMobs();
 }
-// 🔧 水之元氣（sk_elf_watervital）：buff 期間內，下次受到「治癒術」（玩家自身瞬間治癒，不含持續回復 HoT）治癒時恢復量加倍，觸發後 7 秒冷卻（player._waterVitalCd，每秒遞減）。
-function waterVitalHeal(heal) {
-    if (heal > 0 && _teamAuraHas('sk_elf_watervital') && (player._waterVitalCd || 0) <= 0) {   // 🌟 v3.0.99 任一隊員(玩家/傭兵)維持水之元氣即生效·player._waterVitalCd 為全隊共用冷卻
-        player._waterVitalCd = 7;   // 觸發後 7 秒冷卻
-        logCombat('💧 水之元氣發動：本次治療恢復量加倍！', 'heal');
+// 🔧 水之元氣（sk_elf_watervital）：buff 期間內，下次受到「治癒術」（瞬間治癒·不含 HoT）治癒時恢復量加倍，觸發後 7 秒冷卻。
+// 🤝 v3.4.45 改單體：只有「被治癒者本身」持有水之元氣才加倍（per-entity 冷卻 _waterVitalCd·玩家在 js/03:325 遞減、傭兵在 allyMaintainBuffs 遞減）。
+function waterVitalHeal(heal, target) {
+    let t = target || (typeof player !== 'undefined' ? player : null);   // 省略 target→玩家（相容舊呼叫）
+    if (heal > 0 && t && t.buffs && (t.buffs.sk_elf_watervital || 0) > 0 && (t._waterVitalCd || 0) <= 0) {   // 寵物/召喚無 buffs→不加倍（單體語意）
+        t._waterVitalCd = 7;   // 該實體 7 秒冷卻
+        try { logCombat('💧 水之元氣發動：治療恢復量加倍！', 'heal'); } catch (e) {}
         return heal * 2;
     }
     return heal;

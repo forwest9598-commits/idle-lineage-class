@@ -809,7 +809,7 @@ function petAttackOnce(p, d, target, forceCrit, addDmg, skName) {
     try {
         let pg = (typeof petGearBonus === 'function') ? petGearBonus(p) : { dmg: 0, hit: 0 };   // 🦴 v3.2.37 讀該寵物自身的武器（p.eq.wpn）
         let cb = petCharmCombatBonus();
-        let _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(p) : null;   // 🩹 v3.2.67 幻覺攻擊光環（化身+10傷／歐吉+4傷+4命）全隊生效→注入出戰寵物普攻
+        let _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(p, true) : null;   // 🩹 v3.2.67 幻覺攻擊光環（化身+10傷／歐吉+4傷+4命）全隊生效→注入出戰寵物普攻
         let rawHit = p.lv + d.hit + cb.hit + pg.hit + (_ia ? _ia.eh : 0) - target.lv + mobEffAC(target) + (typeof _relicPartnerHit === 'function' ? _relicPartnerHit(p.form) : 0);
         let hv = stretchHitValue(rawHit);
         let r = roll(1, 20);
@@ -864,7 +864,7 @@ function petCastSkill(p, d, target) {
         } else {   // magic：骰值+技能傷害加成·吃魔抗/DR/屬性剋制；必定命中
             let targets = sk.aoe ? mapState.mobs.filter(m => m && m.curHp > 0) : [target];
             let texts = [];
-            let _iaMd = (typeof teamIlluAura === 'function' && teamIlluAura(p)) ? (teamIlluAura(p).md || 0) : 0;   // 🩹 v3.2.67 幻覺攻擊光環（巫妖+2魔傷）全隊生效→注入寵物法術
+            let _iaMd = (typeof teamIlluAura === 'function' && teamIlluAura(p, true)) ? (teamIlluAura(p, true).md || 0) : 0;   // 🩹 v3.2.67 幻覺攻擊光環（巫妖+2魔傷）全隊生效→注入寵物法術
             targets.forEach(m => {
                 let effMr = (m.st && m.st.mrhalf > 0) ? Math.floor((m.mr || 0) / 2) : (m.mr || 0);
                 let core = roll(sk.d[0], sk.d[1]) + d.skillFlat + _iaMd;   // 👑 v3.4.28 移除舊「夥伴精通 +魅力全額法傷」（改為 damageMult ×1.5）
@@ -901,7 +901,7 @@ function enemyAttackPet(mob, p) {
     let st = mob.st || newMobStatus();
     if (st.terror > 0 && Math.random() < 0.90) return;
     let mobHitBonus = (mob.hit || 0) - (st.blindVal || 0) - (st.weaken > 0 ? 2 : 0) - (st.disease > 0 ? 4 : 0) + tamerAuraHit(mob);
-    let hv = stretchHitValue(mob.lv + mobHitBonus - (p.lv || 1) + (d.ac - (typeof teamAcBonus === 'function' ? teamAcBonus(p) : 0)));
+    let hv = stretchHitValue(mob.lv + mobHitBonus - (p.lv || 1) + (d.ac - (typeof teamAcBonus === 'function' ? teamAcBonus(p, true) : 0)));
     let r = roll(1, 20), hit = false, heavy = false;
     if (r === 20) { hit = true; heavy = true; } else if (r !== 1 && hv >= r) hit = true;
     if (!hit) { logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 對寵物 <span class="text-sky-300 font-bold">${p.form}</span> 的攻擊未命中。`, 'miss', 'enemy'); return; }
@@ -910,7 +910,7 @@ function enemyAttackPet(mob, p) {
     if (mob._sherine) dmg = Math.floor(dmg * (mob._sherineMad ? 3 : 2));
     if (mob._grace) dmg = Math.floor(dmg * 1.5);
     dmg -= d.dr;
-    dmg = Math.floor(Math.max(1, dmg) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult() : 1) * petMasteryTakenMult());   // 👑 夥伴精通：受到傷害 −50%
+    dmg = Math.floor(Math.max(1, dmg) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult(true) : 1) * petMasteryTakenMult());   // 👑 夥伴精通：受到傷害 −50%
     dmg = Math.max(1, Math.floor(dmg * riftDamageMult()));
     p.hp -= dmg;
     _petAnimAct(p, 'hurt');
@@ -947,7 +947,7 @@ function applyMobMagicToPet(mob, sk, p) {
     let extra = (sk.db || 0) + (sk.dbLv ? (mob.lv || 0) * (sk.dbLvMult || 1) : 0);
     let dmg = sk.fixedDmg ? (baseM + extra) : (Math.floor((baseM + extra) * mrMult(mr)) - (d.dr || 0));
     if (st.freeze > 0 && sk.ext_freeze) { dmg += sk.ext_freeze; if (sk.extUnfreeze) st.freeze = 0; }
-    dmg = Math.max(1, Math.floor(Math.max(1, dmg * shMul) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult() : 1) * petMasteryTakenMult()));   // 👑 夥伴精通：受到傷害 −50%
+    dmg = Math.max(1, Math.floor(Math.max(1, dmg * shMul) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult(true) : 1) * petMasteryTakenMult()));   // 👑 夥伴精通：受到傷害 −50%
     dmg = Math.max(1, Math.floor(dmg * riftDamageMult()));
     p.hp -= dmg; _petAnimAct(p, 'hurt');
     if (!p._stunCycle) { p._atkCd = (p._atkCd || 0) + d.stunTicks; p._stunCycle = true; }
@@ -1045,7 +1045,7 @@ function renderPetStorageNPC(div, confirmUid) {
                 </span>
             </div>`;
         }
-        return `<div class="flex items-center gap-2 bg-slate-800 border ${isOut ? 'border-emerald-600' : 'border-slate-600'} rounded px-2 py-1.5 text-sm">
+        return `<div class="flex items-center gap-2 bg-slate-800 border ${isOut ? 'border-emerald-600' : 'border-slate-600'} rounded px-2 py-1.5 text-sm"${otherOut ? ' style="opacity:.5;filter:grayscale(.9);" title="其他角色出戰中，無法選取——請由原角色收回"' : ''}>
             <button type="button" onclick="petToggleLock('${p.uid}')" ${otherOut ? 'disabled' : ''} class="btn shrink-0" style="width:24px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;font-size:14px;background:${p.locked ? 'linear-gradient(135deg,#713f12,#a16207)' : '#1e293b'};border-color:${p.locked ? '#eab308' : '#475569'};color:${p.locked ? '#fef3c7' : '#94a3b8'};${otherOut ? 'opacity:.4;' : ''}" title="${otherOut ? '其他角色出戰中，無法修改' : (p.locked ? '解除鎖定' : '鎖定寵物並隱藏放生選項')}" aria-label="${p.locked ? '解除鎖定' : '鎖定寵物'}">${p.locked ? '🔒' : '🔓'}</button>
             <span class="shrink-0" style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${thumb}" alt="" style="max-width:44px;max-height:40px;image-rendering:pixelated;" onerror="this.style.display='none'"></span>
             <span class="flex-1 min-w-0">

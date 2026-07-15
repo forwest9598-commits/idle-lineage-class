@@ -362,8 +362,8 @@ function summonV2AttackOnce(s, d, t, owner) {
     owner = owner || player;   // 🩸 v3.3.23 owner 參數化：傭兵召喚術抽象輸出共用（讀 owner 裝備/精通；killMob 仍歸真隊長·不換身）
     const _ownerDmgMult = (owner !== player && typeof royalAllyMult === 'function') ? royalAllyMult() : 1;   // 👑 傭兵召喚物比照傭兵本體吃隊長魅力；玩家召喚固定1
     const _sgb = (typeof summonGearBonus === 'function') ? summonGearBonus(owner) : { dmg: 0, hit: 0 };   // 🏺 喚獸師的訓練鞭等
-    const _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(s) : null;   // 🩹 v3.2.67 幻覺攻擊光環（化身+10傷／歐吉+4傷+4命）全隊生效→注入召喚物普攻（s 非提供者·排除無效果=取全隊）
-    const _ownerIa = (owner !== player && typeof teamIlluAura === 'function') ? teamIlluAura(owner) : null;   // 傭兵 d 已含自身光環；補入其他隊員提供的巫妖魔傷，玩家 d 則已由 recompute 注入
+    const _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(s, true) : null;   // 🩹 v3.2.67 幻覺攻擊光環（化身+10傷／歐吉+4傷+4命）全隊生效→注入召喚物普攻（s 非提供者·排除無效果=取全隊）
+    const _ownerIa = (owner !== player && !((owner.buffs || {}).sk_illu_lich > 0) && typeof teamIlluAura === 'function') ? teamIlluAura(owner, true) : null;   // 傭兵 d 已含自身光環；補入其他隊員提供的巫妖魔傷。🩹 v3.4.47：owner 自身已持有巫妖(共享會鋪給全隊)→own(+2 在 d)＋others(+2)＝雙算→自身持有時不再補差額
     const _baseMd = Math.min(12, Math.max(0, (owner.d && owner.d.magicDmg) || 0));
     const _teamMd = Math.min(12, Math.max(0, _baseMd + ((_ownerIa && _ownerIa.md) || 0)));
     const _magicAuraRatio = (1 + _teamMd / 80) / (1 + _baseMd / 80);   // _sumDerive/_zmbDerive 已含自身 magicDmg，只補差額避免雙算
@@ -419,8 +419,8 @@ function spiritAttackOnce(s, t, owner) {
     const spec = _spiritSpec(s.skId, s.ele, !!s._king);   // 🧝 v3.2.26 四屬性獨立參數（dice/scale/攻速依屬性·王含 AOE）
     const cha = (owner.d && owner.d.cha) || 0;
     const _sgb = (typeof summonGearBonus === 'function') ? summonGearBonus(owner) : { dmg: 0, hit: 0 };
-    const _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(s) : null;   // 🩹 幻覺光環：精靈命中吃 eh；md 由 owner.d＋下方其他隊員差額進 summonDamageMult，避免重複計算
-    const _ownerIa = (owner !== player && typeof teamIlluAura === 'function') ? teamIlluAura(owner) : null;   // 傭兵補其他隊員的巫妖魔傷；自身光環已在 owner.d，玩家亦已由 recompute 注入
+    const _ia = (typeof teamIlluAura === 'function') ? teamIlluAura(s, true) : null;   // 🩹 幻覺光環：精靈命中吃 eh；md 由 owner.d＋下方其他隊員差額進 summonDamageMult，避免重複計算
+    const _ownerIa = (owner !== player && !((owner.buffs || {}).sk_illu_lich > 0) && typeof teamIlluAura === 'function') ? teamIlluAura(owner, true) : null;   // 傭兵補其他隊員的巫妖魔傷；自身光環已在 owner.d。🩹 v3.4.47：owner 自身已持有巫妖→不再補差額（共享使全隊持有＝原寫法必雙算）
     const smLike = { skId: s.skId, hitLvOff: spec.hitLvOff || 0, dmgMult: spec.dmgMult || 1 };
     _petAnimAct(s, 'attack', t.uid);   // 🎬 v3.2.73 補跑中不設→回前景不同步爆播
     const hv = summonHitValue(smLike, owner, t, _sgb.hit + (_ia ? _ia.eh : 0));
@@ -458,7 +458,7 @@ function enemyAttackSummon(mob, s) {
     const st = mob.st || newMobStatus();
     if (st.terror > 0 && Math.random() < 0.90) return;
     const mobHitBonus = (mob.hit || 0) - (st.blindVal || 0) - (st.weaken > 0 ? 2 : 0) - (st.disease > 0 ? 4 : 0) + tamerAuraHit(mob);
-    const hv = stretchHitValue(mob.lv + mobHitBonus - s.lv + (d.ac - (typeof teamAcBonus === 'function' ? teamAcBonus(s) : 0)));   // 🩹 v3.2.67 大地祝福/高崙 全隊 AC 減免也惠及召喚物（比照寵物）
+    const hv = stretchHitValue(mob.lv + mobHitBonus - s.lv + (d.ac - (typeof teamAcBonus === 'function' ? teamAcBonus(s, true) : 0)));   // 🩹 v3.2.67 大地祝福/高崙 全隊 AC 減免也惠及召喚物（比照寵物）
     const r = roll(1, 20);
     let hit = false, heavy = false;
     if (r === 20) { hit = true; heavy = true; } else if (r !== 1 && hv >= r) hit = true;
@@ -468,7 +468,7 @@ function enemyAttackSummon(mob, s) {
     if (mob._sherine) dmg = Math.floor(dmg * (mob._sherineMad ? 3 : 2));
     if (mob._grace) dmg = Math.floor(dmg * 1.5);
     dmg = Math.max(1, Math.floor(dmg * riftDamageMult()) - d.dr);
-    dmg = Math.max(1, Math.floor(dmg * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult() : 1)));   // 🩹 v3.2.67 鋼鐵防護/化身 全隊受傷減免也惠及召喚物（比照寵物）
+    dmg = Math.max(1, Math.floor(dmg * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult(true) : 1)));   // 🩹 v3.2.67 鋼鐵防護/化身 全隊受傷減免也惠及召喚物（比照寵物）
     s.hp -= dmg;
     _petAnimAct(s, 'hurt');
     logCombat(`<span class="${getMobColor(mob.lv)}">${mob.n}</span> 攻擊 <span class="text-purple-300">${s.form}</span>，造成 ${dmg} 點傷害。`, 'enemy-attack', 'enemy');
@@ -488,7 +488,7 @@ function applyMobMagicToSummon(mob, sk, s) {
     let baseM = roll(sk.dmg[0], sk.dmg[1]);
     let extra = (sk.db || 0) + (sk.dbLv ? (mob.lv || 0) * (sk.dbLvMult || 1) : 0);
     let dmg = sk.fixedDmg ? (baseM + extra) : (Math.floor((baseM + extra) * mrMult(mr)) - dr);
-    dmg = Math.max(1, Math.floor(Math.max(1, dmg * shMul) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult() : 1)));
+    dmg = Math.max(1, Math.floor(Math.max(1, dmg * shMul) * (typeof teamDmgReduceMult === 'function' ? teamDmgReduceMult(true) : 1)));
     dmg = Math.max(1, Math.floor(dmg * riftDamageMult()));
     s.hp -= dmg;
     _petAnimAct(s, 'hurt');

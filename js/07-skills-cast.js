@@ -460,11 +460,11 @@ function castSkillInner(skId) {
         let heal = sk.healDice
             ? Math.max(1, Math.floor((rollDice(sk.healDice[0], sk.healDice[1]) + (sk.healBase || 0)) * _spCoefHeal))   // (XdY + healBase) × 魔法傷害公式
             : Math.max(1, (sk.valBase || 0) + roll(sk.valDice[0], sk.valDice[1]) + player.d.magicDmg);
-        heal = waterVitalHeal(heal);   // 🔧 水之元氣：下次恢復魔法治癒加倍
         // 🤝 v3.0.94→v3.2.67 隊長治癒也幫隊員/寵物/召喚物：目標＝隊伍(玩家＋未倒地傭兵＋出戰寵物＋召喚物)中 HP% 最低者（鏡像傭兵 allyTryHeal 的選人規則）
         let _cands = (typeof healBeneficiaries === 'function') ? healBeneficiaries() : [player];
         let _hTgt = player, _hPct = Infinity;
         _cands.forEach(c => { let _mx = (typeof _supMhp === 'function') ? _supMhp(c) : (c.mhp || 1); if (_mx > 0) { let _p2 = ((typeof _supHp === 'function') ? _supHp(c) : (c === player ? player.hp : c.curHp) || 0) / _mx; if (_p2 < _hPct) { _hPct = _p2; _hTgt = c; } } });
+        heal = waterVitalHeal(heal, _hTgt);   // 🤝 v3.4.45 水之元氣改單體：移到選定目標(_hTgt)後·僅被治癒者持有才加倍
         _lastHealFxTarget = _hTgt;   // 🩹 記錄受益者→castSkill 把治癒特效疊在其身上（寵物/召喚物 _partyMemberRect 回 null→退預設錨點）
         if (typeof _supHeal === 'function') _supHeal(_hTgt, heal); else if (_hTgt === player) player.hp = Math.min(player.mhp, player.hp + heal); else _hTgt.curHp = Math.min(_hTgt.mhp, (_hTgt.curHp || 0) + heal);
         player.cds.healSk = getAutoCastInterval();
@@ -928,6 +928,8 @@ function autoActions() {
             castSkill(sid);
         }
     });
+    // 🤝 v3.4.45 單體輔助共享：玩家有清單內 buff→幫缺的隊友(傭兵)補（負重過重時與 buff 迴圈一致不施放）
+    if((player.d.loadTier||0) < 2) { try { if (typeof shareTeamBuffs === 'function') shareTeamBuffs(player); } catch(e){} }
 
     // 轉換魔法（妖精/法師下拉，單選）：每 3 秒一次；安全區(村莊)暫停；MP 達 90% 以上不轉換；
     // 僅在 HP 高於玩家自訂門檻時施放（避免把 HP 轉到危險值；單選天然避免兩個同時使用）

@@ -2101,6 +2101,7 @@ function allyMaintainBuffs(ally) {
     if (!ally || ally._downed) return;
     if (state.ticks % 10 !== 0) return;                 // 每秒一次（比照玩家 buff 遞減節奏；限制重算頻率）
     if (!ally.buffs) ally.buffs = {};
+    if (ally._waterVitalCd > 0) ally._waterVitalCd--;   // 🤝 v3.4.45 水之元氣單體冷卻遞減（per-entity·每秒一次·比照玩家 js/03:325）
     let _auraBefore = _MERC_ILLU_ATK_AURA.map(s => ((ally.buffs[s] || 0) > 0) ? '1' : '0').join('');   // 🌟 v3.0.100→🔮 v3.2.2 攻擊型幻覺光環(化身+10／歐吉+4傷+4命／巫妖+2魔傷)前狀態：本傭兵取得/失去任一→末尾 calcStats 刷新玩家 d（玩家攻擊即時吃/退·recompute 末段重注入 teamIlluAura(player)）。高崙 AC 走 teamAcBonus 受擊時即時讀取·不需刷新
     let changed = false;
     for (let k in ally.buffs) { if (ally.buffs[k] > 0) { ally.buffs[k]--; if (ally.buffs[k] <= 0) { ally.buffs[k] = 0; changed = true; } } }   // 遞減；到期→需重算移除衍生值
@@ -2153,6 +2154,55 @@ function allyMaintainBuffs(ally) {
     }
     if (changed) { try { _allyLevelRecompute(ally); } catch (e) {} }   // 重算 ally.d 反映 buff 衍生值（含 ally._recompN++·供幻覺 nonce 守衛）
     if (_MERC_ILLU_ATK_AURA.map(s => ((ally.buffs[s] || 0) > 0) ? '1' : '0').join('') !== _auraBefore) { try { if (typeof calcStats === 'function') calcStats(); } catch (e) {} }   // 🌟 v3.0.100→🔮 v3.2.2 本傭兵攻擊型幻覺光環變動→刷新玩家 d（recompute 末段重注入 teamIlluAura(player)）
+    try { shareTeamBuffs(ally); } catch (e) {}   // 🤝 v3.4.45 單體輔助共享：本傭兵有清單內 buff→幫缺的隊友補
+}
+// 🤝 v3.4.45 單體輔助共享（TEAM_SHARE_BUFFS·js/01）：施法者(caster·玩家或傭兵)自己有清單內 buff、隊友(玩家/未倒地傭兵)沒有 → 一次補滿所有缺者（逐一扣施法者 MP·不夠即停）。
+//   與「自動維持勾選」解耦（只看清單＋施法者是否已持有該 buff）。目標寫入 buffs 後對「該目標」重算：玩家 calcStats／傭兵 _allyLevelRecompute（每目標最多重算一次）。
+//   目標合法性只看武器/盾需求（元素 reqEle 不擋受益者·效果與屬性無關）；加速類目標已有任何加速來源(buffs.haste/裝備常駐)→跳過免浪費。
+function _shareBuffLegalForTarget(t, sk) {
+    let w = (t.eq && t.eq.wpn) ? DB.items[t.eq.wpn.id] : null;
+    if (sk.reqWpn === 'w2h' && (!w || !w.w2h)) return false;
+    if (sk.reqWpnMelee && (!w || w.isBow || w.ranged)) return false;
+    if (sk.reqWpnBlunt && (!t.eq || !t.eq.wpn || !(getWeaponTags(t.eq.wpn.id).includes('單手鈍器') || getWeaponTags(t.eq.wpn.id).includes('雙手鈍器')))) return false;
+    if (sk.reqShield && !(t.eq && t.eq.shield) && !(t.eq && t.eq.wpn && getWeaponTags(t.eq.wpn.id).includes('武士刀'))) return false;
+    return true;
+}
+// 🎩 v3.4.48 力盔/敏盔版＝同效果（用戶指定）：目標身上有頭盔版 buff→「判定已有該 buff」不分享法術版。
+//   通暢氣脈術↔敏盔1(js/02:59 recompute 會歸零·此閘兼防 MP 流失迴圈)、體魄強健術↔力盔3(recompute 無歸零對→原本會 +5 疊 +5)、加速術↔敏盔2(haste:true 設 buffs.haste·上方加速閘其實已涵蓋·此為顯式保險)。
+//   擬似魔法武器↔力盔1／無所遁形↔力盔2 不在 TEAM_SHARE_BUFFS 免列。
+const _SHARE_HELM_EQUIV = { sk_dex_up: 'sk_helm_dex1', sk_str_up: 'sk_helm_str3', sk_haste_spell: 'sk_helm_dex2' };
+function shareTeamBuffs(caster) {
+    if (typeof TEAM_SHARE_BUFFS === 'undefined' || !caster || !caster.skills || !caster.buffs) return;
+    if (typeof mapState !== 'undefined' && mapState.current && mapState.current.startsWith('town_')) return;   // 安全區不施放
+    let cst = caster.statuses || {};
+    if (cst.silence > 0 || cst.magicseal > 0 || cst.stun > 0 || cst.freeze > 0 || cst.stone > 0 || cst.paralyze > 0 || cst.sleep > 0) return;   // 施法者硬控/沉默→不施放
+    let team = [];
+    if (typeof player !== 'undefined' && player && !player.dead) team.push(player);
+    if (typeof player !== 'undefined' && player && player.allies) player.allies.forEach(a => { if (a && !a._downed) team.push(a); });
+    for (let j = 0; j < team.length; j++) {
+        let t = team[j];
+        if (t === caster) continue;
+        if (!t.buffs) t.buffs = {};
+        let applied = false;
+        for (let i = 0; i < caster.skills.length; i++) {
+            let sid = caster.skills[i];
+            if (!TEAM_SHARE_BUFFS.has(sid)) continue;
+            let sk = DB.skills[sid]; if (!sk || sk.type !== 'buff') continue;
+            if ((caster.buffs[sid] || 0) <= 0) continue;                 // 施法者自己要有此 buff 才分享
+            if ((t.buffs[sid] || 0) > 0) continue;                       // 目標已有此 buff→跳過
+            if (sk.haste && ((t.buffs.haste || 0) > 0 || t._equipHaste)) continue;   // 目標已有加速來源→跳過
+            { let _helmEq = _SHARE_HELM_EQUIV[sid]; if (_helmEq && (t.buffs[_helmEq] || 0) > 0) continue; }   // 🎩 v3.4.48 目標有力盔/敏盔版＝判定已有該 buff 不分享（通暢氣脈/體魄強健/加速三組·dex_up 兼防 js/02:59 歸零→MP 流失迴圈）
+            if (!_shareBuffLegalForTarget(t, sk)) continue;
+            let cost = (caster.d && typeof caster.d.getMpCost === 'function') ? caster.d.getMpCost(sk.mp, sk.tier) : (sk.mp || 0);
+            if ((caster.mp || 0) < cost) break;                          // MP 不夠→這位施法者本次停止分享
+            caster.mp -= cost;
+            if (caster !== player && typeof allyManaMasteryRefund === 'function') allyManaMasteryRefund(caster, cost);   // 傭兵魔導精通退魔（玩家 getMpCost 已含折扣）
+            t.buffs[sid] = sk.dur;
+            if (sk.haste) t.buffs.haste = Math.max(t.buffs.haste || 0, sk.dur);
+            applied = true;
+        }
+        if (applied) { if (t === player) { try { if (typeof calcStats === 'function') calcStats(); } catch (e) {} } else { try { if (typeof _allyLevelRecompute === 'function') _allyLevelRecompute(t); } catch (e) {} } }
+    }
 }
 // 🆕 v2.6.28 淨化共用（魔法相消術/聖潔之光/解毒術·玩家與傭兵共用）：施法者(自己)受硬控(石化/冰凍/暈眩/麻痺/沉睡)或沉默/魔封→無法施放；否則幫隊員解可解狀態。
 //    v2.6.29 改「一次只解一人·優先主要玩家」：teamCleanseOne 依 _dispelTeamMembers 順序(玩家排首→傭兵)找第一個有可解狀態者，只清除該一人的該類狀態並回傳被解者。
@@ -2209,7 +2259,7 @@ function alliesTick() {
         let _ccBlock = (_ast.stun > 0 || _ast.freeze > 0 || _ast.stone > 0 || _ast.paralyze > 0 || _ast.sleep > 0);   // 🤝 Phase4：硬控（暈眩/冰凍/石化/麻痺/睡眠）→完全無法行動
         let _castBlock = (_ast.silence > 0 || _ast.magicseal > 0);   // 🤝 Phase4：沉默/魔法封印→不可施放技能/治癒，僅能基本攻擊
         let _dpsASnap = _dpsSnap(); _dpsAllyTurn = true;   // 🎯 DPS：逐傭兵量測本回合輸出（攻擊/立方/持續增益），_dpsAllyTurn 期間 _allyDamageMob 不重複計入
-        let _iAura = teamIlluAura(ally), _iRn = ally._recompN || 0, _iBase = null;   // 🔮 v2.6.7 幻覺全隊攻擊光環：擷取隊長 illusion buff（在任何換身前讀）·🌟 v3.0.99 排除本傭兵自身(其自身已在 ally.d)·任一隊員提供皆吃·_iRn＝升級重算計數（還原守衛）
+        let _iAura = teamIlluAura(ally), _iRn = ally._recompN || 0, _iBase = null;   // 🔮 v2.6.7 幻覺光環注入（傭兵本體回合）→🩹 v3.4.47 修：v3.4.45 誤傳 forMinion=true——這是「傭兵自己的攻擊回合」非寵/召喚路徑，幻覺已改單體(靠共享逐人補·自身 buff 經 recompute 在 ally.d)，再注入其他隊員的光環＝傭兵 +4/+4 變 +8/+8 雙重計算。省略 forMinion→回 null→不注入（召喚物光環由 js/23 內部 teamIlluAura(s,true) 自理·與此無關）
         try {
         if (_iAura) { _iBase = { ed: ally.d.extraDmg || 0, eh: ally.d.extraHit || 0, md: ally.d.magicDmg || 0 }; ally.d.extraDmg = _iBase.ed + _iAura.ed; ally.d.extraHit = _iBase.eh + _iAura.eh; ally.d.magicDmg = _iBase.md + _iAura.md; }   // 注入本傭兵：額外傷害(歐吉4+化身10)/額外命中(歐吉4)/魔法傷害(巫妖2)
         if (!_ccBlock && ally.cls === 'illusion') allyCubeTick(ally);   // 🔮 幻術士傭兵：立方常駐光環（硬控中不展開）
@@ -2303,7 +2353,7 @@ function allyTryHeal(ally) {
     let heal = sk.healDice
         ? Math.max(1, Math.floor((rollDice(sk.healDice[0], sk.healDice[1]) + (sk.healBase || 0)) * _coef))
         : Math.max(1, (sk.valBase || 0) + roll(sk.valDice[0], sk.valDice[1]) + (d.magicDmg || 0));
-    heal = waterVitalHeal(heal);   // 🆕 v2.6.17 水之元氣改全隊生效：傭兵治癒也吃隊長「水之元氣」加倍（waterVitalHeal 讀真隊長 player.buffs＋共用 7 秒冷卻·此處 player 為真隊長非換身）
+    heal = waterVitalHeal(heal, lowest);   // 🤝 v3.4.45 水之元氣改單體：僅「被治癒者(lowest)」持有才加倍（per-entity 冷卻）
     if (typeof _supHeal === 'function') _supHeal(lowest, heal); else if (lowest === player) { player.hp = Math.min(player.mhp, player.hp + heal); } else { lowest.curHp = Math.min(lowest.mhp, (lowest.curHp || 0) + heal); }   // 🩹 v3.2.67 可能是寵物/召喚物
     // 🎬 v3.0.95 傭兵治癒視覺回饋（用戶反映「沒動作也沒效果」·數值其實有補但零視覺）：①施放者播施法動作（原本傭兵治癒完全無動畫）②治癒特效疊在被治癒者 sprite 身上（無 sprite→戰鬥區預設錨點；未註冊技能名靜默略過）
     if (typeof _allySpriteTrigger === 'function') _allySpriteTrigger(ally, 'skill', sk.n);
