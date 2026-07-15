@@ -1,6 +1,6 @@
 /** 遊戲核心資料庫 */
 // 🏷️ 遊戲版本號（顯示於登入頁面下方·單一真相來源）：更新版本時只改這一行，登入頁面自動同步。
-const GAME_VERSION = 'v3.4.51';
+const GAME_VERSION = 'v3.4.53';
 // ===== 💾 存檔壓縮（LZString compressToUTF16/decompressFromUTF16·MIT, Pieroxy）：localStorage 內部以 UTF-16 壓縮，省 ~89%，繞過 5MB 上限 =====
 //  ⚠️ 只壓 localStorage（存檔位/倉庫/共用桶/_bak）；匯出檔維持明文 JSON（可攜·importSave 用 JSON.parse 驗證）。_lzGet 相容舊明文存檔（無 'LZ1:' 前綴→原樣回傳）。
 var LZString = (function () {
@@ -797,6 +797,25 @@ const DB = {
         "relic_pure_maiden_love": { n: "純潔少女的憐愛", type: "acc", slot: "amulet", relic: true, noEnhance: true, ac: 0, dex: 2, int: 2, mpR: 3, req: "elf", reqAvatar: "女妖精", strictAvatar: true, p: 10000, gachaWeight: 0, img: "assets/icons/accessories/智力項鍊.png", d: "【遺物】獨角獸回應純潔少女憐愛所留下的項鍊。僅女妖精可裝備；男妖精與其他職業皆無法裝備。" },
         "relic_rockmage_secret": { n: "破岩法師的秘術", type: "wpn", isWand: true, relic: true, noEnhance: true, ignHardSkin: true, dmgS: 3, dmgL: 3, hit: 15, dmgBonus: 15, extraMp: 15, ele: "earth", procSkill: "sk_hell_fang", procRateBase: 100, procRatePerEn: 0, req: "mage,illusion", p: 10000, gachaWeight: 0, img: "assets/icons/weapons/巴風特魔杖.png", d: "【遺物】破岩法師將大地秘術封入的單手魔杖。一般模式可發動共鳴；一般攻擊化為地屬性，每次攻擊 100% 額外觸發地獄之牙。" },
         "relic_general_swordguard": { n: "將軍愛用的握劍護腕", type: "arm", slot: "gloves", relic: true, noEnhance: true, ac: 6, swordStr: 3, req: "all", p: 10000, gachaWeight: 0, img: "assets/icons/armors/武官手套.png", d: "【遺物】黑暗妖精將軍愛用的握劍護腕。裝備單手劍或雙手劍時，力量 +3。" },
+        // ===== 🏺 遺物 第十六批（單一怪物 0.0001% 掉落·MOB_DROPS/ITEM_WEIGHTS 於 js/01；WEAPON_TAGS 於 js/10；新機制掛點見 js/02/03/04/06/07/22） =====
+        "relic_tamer_petarm":    { n: "馴獸師手做寵物專用盔甲", type: "arm", slot: "petarm", relic: true, noEnhance: true, petAc: 5, petDmgReduce: 0.2, req: "all", p: 10000, gachaWeight: 0, d: "【遺物】馴獸師親手為愛寵縫製的護甲，寵物受到的傷害減少 20%。寵物專用。" },
+        "relic_slave_shirt":     { n: "奴隸粗布衫",         type: "arm", slot: "tshirt", relic: true, noEnhance: true, ac: 9, dr: 5, req: "all", p: 10000, gachaWeight: 0, d: "【遺物】地獄奴隸身上襤褸的粗布衫，苦役磨出的堅韌，受到的傷害減免 +5。" },
+        "relic_cerberus_pin":    { n: "地獄犬三頭釵",       type: "wpn", relic: true, noEnhance: true, dmgS: 20, dmgL: 18, hit: 13, dmgBonus: 16, eff: "combo", comboRate: 35, ele: "fire", atkSpdPct: 33, req: "dark", p: 10000, gachaWeight: 0, d: "【遺物】地獄犬三顆頭顱化成的三爪鋼釵，雙擊 35%、攻擊貫穿硬皮；一般攻擊化為火屬性，攻擊速度增加 33%。" },
+        "relic_troll_regen_ring":{ n: "巨魔的再生戒指",     type: "acc", slot: "ring",   relic: true, noEnhance: true, ac: 0, hpR: 10, hpRegenFaster: 4, req: "all", p: 10000, gachaWeight: 0, d: "【遺物】巨魔不死之軀凝成的戒指，HP 自然恢復的間隔縮短 4 秒、每次恢復量 +10。" },
+        "relic_flamemage_robe":  { n: "烈焰巫師的正式長袍", type: "arm", slot: "armor",  relic: true, noEnhance: true, ac: 11, resFire: 5, mdmg: 2, fireballBurst: true, req: "mage,elf", p: 10000, gachaWeight: 0, d: "【遺物】烈焰巫師出席典禮的正式長袍，火屬性抗性 +5、魔法傷害 +2。已學會「燃燒的火球」時，其化為威力更強的「爆裂的火球」。" },
+        "relic_burden_gauntlet": { n: "負重的堅忍巨臂",     type: "arm", slot: "gloves", relic: true, noEnhance: true, ac: 8, weightCap: 150, con: 2, req: "royal,knight,dragon,illusion,warrior", p: 10000, gachaWeight: 0, d: "【遺物】背負重擔而生的堅忍巨臂，負重上限 +150、體質 +2。" },
+        "relic_imp_fang":        { n: "仿製小惡魔尖牙套",   type: "acc", slot: "petwpn", relic: true, noEnhance: true, petDmg: 3, petHit: 9, petBleed: true, req: "all", p: 10000, gachaWeight: 0, d: "【遺物】仿照小惡魔獠牙打造的尖牙套，寵物額外傷害 +3、額外命中 +9，一般攻擊命中造成出血。寵物專用。" },
+        "relic_iron_stone_shield":{ n: "笨重的鋼鐵石盾",    type: "arm", slot: "shield", relic: true, noEnhance: true, ac: 0, dr: 30, mhp: 150, noEvade: true, req: "royal,knight", p: 10000, gachaWeight: 0, d: "【遺物】沉重無比的鋼鐵石盾，受到的傷害減免 +30、HP +150；過於笨重而無法迴避攻擊。" },
+        "relic_mana_spring_boots":{ n: "魔力泉源長靴",      type: "arm", slot: "boots",  relic: true, noEnhance: true, ac: 6, mpR: 7, mmp: 100, req: "mage,elf,illusion", p: 10000, gachaWeight: 0, d: "【遺物】湧動著魔力泉源的長靴，MP 自然恢復量 +7、MP 上限 +100。" },
+        "relic_dark_metal_club": { n: "暗黑的金屬棍棒",     type: "wpn", relic: true, noEnhance: true, dmgS: 6, dmgL: 8, hit: 18, dmgBonus: 15, eleBonusDmg: { ele: "none", add: 10 }, req: "royal,knight,mage,elf,dragon,illusion,warrior", p: 10000, gachaWeight: 0, d: "【遺物】暗黑金屬鑄成的棍棒，攻擊貫穿硬皮；對無屬性的敵人造成額外固定傷害 +10。單手鈍器。" },
+        "relic_summon_cloth":    { n: "召喚儀式的魔術布",   type: "arm", slot: "shin",   relic: true, noEnhance: true, ac: 3, wis: 1, summonCtrl: true, req: "mage", p: 10000, gachaWeight: 0, d: "【遺物】召喚儀式所用的魔術布，纏繞於脛，精神 +1；可控制召喚術的效果（等同召喚控制戒指）。" },
+        "relic_ant_pincer":      { n: "斷裂的昆蟲巨鉗",     type: "wpn", relic: true, noEnhance: true, dmgS: 16, dmgL: 10, hit: 20, dmgBonus: 15, mcrit: 5, req: "knight,dragon", p: 10000, gachaWeight: 0, d: "【遺物】巨大守護螞蟻斷裂的巨鉗，近距離爆擊率 +5%。單手劍（反擊、居合）。" },
+        "relic_ocean_orb":       { n: "魔力塑造的海洋水晶球", type: "wpn", isWand: true, relic: true, noEnhance: true, eff: "magicstrike", dmgS: 15, dmgL: 15, hit: 20, dmgBonus: 17, str: 3, mdmg: 3, ele: "water", mpOnHit: true, onHitWet: true, req: "mage", p: 10000, gachaWeight: 0, d: "【遺物】以魔力塑成的海洋水晶球，力量 +3、魔法傷害 +3；一般攻擊化為水屬性，命中使目標潮濕——其受到的下一次風屬性傷害 ×2 並解除潮濕；命中時恢復 1 MP。魔擊（一般限定）。" },
+        "relic_ash_fist":        { n: "燃燒殆盡的灰燼之拳", type: "wpn", relic: true, noEnhance: true, dmgS: 4, dmgL: 4, hit: 16, dmgBonus: 14, ele: "fire", atkSpdPct: 30, req: "royal,knight,mage,elf,dragon,illusion,warrior", p: 10000, gachaWeight: 0, d: "【遺物】燃燒殆盡卻餘溫不散的灰燼之拳，攻擊貫穿硬皮；一般攻擊化為火屬性，攻擊速度增加 30%。單手鈍器。" },
+        "relic_reaper_scythe":   { n: "死神的鐮刀破片",     type: "wpn", w2h: true, relic: true, noEnhance: true, eff: "cleave", ignHardSkin: true, dmgS: 21, dmgL: 30, hit: 18, dmgBonus: 14, mcritDmg: 30, req: "knight,dragon", p: 10000, gachaWeight: 0, d: "【遺物】死神鐮刀碎裂的破片，一般模式可發動切割、攻擊貫穿硬皮；近距離爆擊傷害 +30%。雙手劍。" },
+        "relic_djinn_promise":   { n: "巨靈的承諾",         type: "acc", slot: "ear",    relic: true, noEnhance: true, ac: 3, autoReviveScroll: true, req: "all", p: 10000, gachaWeight: 0, d: "【遺物】巨靈立下的守護承諾，傭兵與寵物死亡時立即自動使用復活卷軸復活（仍需消耗復活卷軸）。" },
+        "relic_mini_darkelf":    { n: "被差遣的迷你闇精靈", type: "wpn", qigu: true, relic: true, noEnhance: true, dmgS: 25, dmgL: 25, hit: 0, int: 1, mdmg: 1, extraMp: 11, procSkill: "sk_darkwave", procRateBase: 8, procRatePerEn: 0, req: "illusion", p: 10000, gachaWeight: 0, d: "【遺物】被闇精靈王差遣的迷你闇精靈，化作幻術士的奇古獸。智力 +1、魔法傷害 +1；攻擊時 8% 機率觸發闇黑波動。一般攻擊化為必中的魔法傷害（受魔抗減免）。" },
+        "relic_avenger_crossbow":{ n: "復仇者的十字弩弓",   type: "wpn", isBow: true, ranged: true, w2h: true, rapidfire: 75, relic: true, noEnhance: true, ignHardSkin: true, rapidMax: true, dmgS: 3, dmgL: 2, hit: 20, dmgBonus: 17, req: "elf,dark,illusion", p: 10000, gachaWeight: 0, d: "【遺物】黑暗復仇者的十字弩弓，一般模式可發動連射 75%、攻擊貫穿硬皮；連射必定觸發最大箭數（需裝備箭矢）。" },
         "clk_elf": { n: "精靈斗篷", type: "arm", slot: "cloak", ac: 1, req: "all", safe: 6, p: 900, gachaWeight: 100 },
         "clk_oasis": { n: "歐西斯斗篷", type: "arm", slot: "cloak", ac: 0, req: "all", safe: 4, p: 15, gachaWeight: 100 },
         "arm_86": { n: "侏儒斗篷", type: "arm", slot: "cloak", ac: 0, req: "all", safe: 4, p: 18, gachaWeight: 100 },
@@ -2539,6 +2558,8 @@ const DB = {
 
         // 四階魔法 (Lv 16)
         "sk_fireball": { n: "燃燒的火球", type: "atk", tier: 4, reqM: 16, reqE: 32, mp: 16, dmgType: "magic", ele: "fire", target: "all", dmgDice: [5, 9] },
+        "sk_fireball_burst": { n: "爆裂的火球", type: "atk", tier: 4, mp: 20, dmgType: "magic", ele: "fire", target: "all", dmgDice: [6, 10], fxAlias: "燃燒的火球" },   // 🏺 遺物「烈焰巫師的正式長袍」：已學燃燒的火球時，於施法瞬間替換（castSkillInner/manualCast remap）；非可學技能
+        "sk_darkwave": { n: "闇黑波動", type: "atk", tier: 4, dmgType: "magic", ele: "none", target: "all", dmgDice: [5, 9] },   // 🏺 遺物「被差遣的迷你闇精靈」奇古獸 procSkill(8%) 用；非可學技能·對全體造成無屬性魔法傷害
         "sk_dex_up": { n: "通暢氣脈術", type: "buff", tier: 4, reqM: 16, reqE: 32, mp: 45, dur: 1200, d: { dex: 5 }, msg: "你覺得身手變得更靈活。" },
         "sk_break": { n: "壞物術", type: "atk", tier: 4, reqM: 16, reqE: 32, mp: 20, dmgType: "magic", status: { kind: "broken", pbase: 150, dur: 25 } },
         "sk_vampire": { n: "吸血鬼之吻", type: "atk", tier: 4, reqM: 16, reqE: 32, mp: 13, dmgType: "magic", ele: "none", dmgDice: [3, 10], dmgBase: 15, lifesteal: true, healSlot: true },
