@@ -108,6 +108,10 @@ const MOB_ANIM_DEATH_FX = {
     '冰之女王侍女': { n: 25, ew: 158, eh: 115, anchored: { ox: -26, oy: 10, bw: 101, bh: 114 } },
 };   // v3.0.13 冰之女王新版動畫無 death_effect→移除(死亡改由 21 幀 death_ 序列本身表現)
 let _deathFxCache = {};
+// 🎬 v3.4.43 死亡序列殘影「專屬節流計數」：同時存在的死亡殘影數。與傷害數字/粒子洪水解耦——
+//   原本用 layer.childElementCount<150 判斷會被跳字/法術粒子洪水誤擋，AoE 連殺時死亡幀「有時不播」。
+//   改看此獨立計數（上限 12≈前後排 5 格 × 2 波重疊 + 餘裕），正常必定播完，只有病態重疊才擋。
+let _deathGhostCount = 0;
 function _preloadDeathFx(name, n) {
     if (_deathFxCache[name]) return _deathFxCache[name];
     let arr = [];
@@ -683,8 +687,8 @@ function vfxKill(mob) {
             ? (typeof _mob8Cache !== 'undefined' ? _mob8Cache[mob.n + '#' + (mob._face8Loaded != null ? mob._face8Loaded : 6)] : null)   // 🧭 v3.2.11 八方向怪：取當前面向的方向 cache（死亡殘影播該向 death 幀；無 weapon 層→下方 _da[_wk] 為 undefined 安全）
             : ((typeof _mobAnimCache !== 'undefined') ? _mobAnimCache[mob.n] : null);
         let _deathSeq = (_da && _da !== 'probing' && _da.death) ? _da.death : null;
-        // ✨ 強化死亡表現（讓「怪物被消滅」更明顯）：白閃殘影 + 衝擊波環 + 核心爆閃。場上特效過多(>150)時略過較重的殘影/環，只留粒子，避免大量 AoE 連殺洗版。
-        if (layer.childElementCount < 150) {
+        // ✨ 強化死亡表現（讓「怪物被消滅」更明顯）。🎬 v3.4.43 節流改看「死亡殘影專屬計數」_deathGhostCount<12（原 layer.childElementCount<150 會被跳字/法術粒子洪水誤擋→AoE 連殺時死亡幀有時不播）；上限 12≈前後排 5 格 × 2 波重疊 + 餘裕。
+        if (_deathGhostCount < 12) {
             // 1) 死亡殘影：複製怪物圖像 → 白化＋放大＋淡出（強烈的「被抹除」感）
             try {
                 let _img = box.querySelector('img:not(.mob-anim-shadow):not(.mob-anim-weapon):not(.mob-anim-weapon2)');
@@ -700,6 +704,9 @@ function vfxKill(mob) {
                     gh.style.transformOrigin = (_anc.hc * 100).toFixed(1) + '% ' + (_anc.vc * 100).toFixed(1) + '%';   // 🎯 v2.6.45 放大自「怪物身體中心」擴散(非方框中心)→白閃由怪身發散
                     layer.appendChild(gh);
                     if (_deathSeq) {   // 🎞️ v2.6.86 死亡序列（death_*.png）：殘影原位逐幀播一輪→短淡出（取代白閃；怪卡本體照常移除）
+                        _deathGhostCount++;   // 🎬 v3.4.43 專屬節流：生殘影 +1；淡出結束/保險回收擇一 _release() 保證只減一次
+                        let _dghReleased = false;
+                        let _release = () => { if (_dghReleased) return; _dghReleased = true; _deathGhostCount = Math.max(0, _deathGhostCount - 1); };
                         gh.src = _deathSeq[0].src;
                         // ⚔️ v2.7.44 死亡殘影武器層(death_w/death_w2·screen 疊上)：與 body death 同鐘逐幀(--multi 共畫布同幾何)·如爆彈花爆炸(僅 death_w)/龍死亡火焰。嚴格 1:1(本幀無 _w 幀→不換 src)。
                         let _ghW = [];
@@ -719,9 +726,9 @@ function vfxKill(mob) {
                         let _fi = 0, _fint = setInterval(() => {
                             _fi++;
                             if (_fi < _deathSeq.length) { gh.src = _deathSeq[_fi].src; _ghW.forEach(W => { if (W.seq[_fi]) W.el.src = W.seq[_fi].src; }); }
-                            else { clearInterval(_fint); try { gh.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-out' }).onfinish = () => gh.remove(); } catch (e) { gh.remove(); } _ghW.forEach(W => { try { W.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-out' }).onfinish = () => W.el.remove(); } catch (e) { W.el.remove(); } }); }
+                            else { clearInterval(_fint); try { gh.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-out' }).onfinish = () => { gh.remove(); _release(); }; } catch (e) { gh.remove(); _release(); } _ghW.forEach(W => { try { W.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-out' }).onfinish = () => W.el.remove(); } catch (e) { W.el.remove(); } }); }
                         }, 1000 / MOB_ANIM_FPS);
-                        setTimeout(() => { try { clearInterval(_fint); if (gh.isConnected) gh.remove(); _ghW.forEach(W => { if (W.el.isConnected) W.el.remove(); }); } catch (e) {} }, _deathSeq.length * (1000 / MOB_ANIM_FPS) + 2000);   // 保險回收
+                        setTimeout(() => { try { clearInterval(_fint); if (gh.isConnected) gh.remove(); _ghW.forEach(W => { if (W.el.isConnected) W.el.remove(); }); } catch (e) {} _release(); }, _deathSeq.length * (1000 / MOB_ANIM_FPS) + 2000);   // 保險回收
                     }   // 🚫 v2.7.49 移除無死亡序列時的 CSS 白閃殘影 else 分支
                 }
             } catch (e) {}
