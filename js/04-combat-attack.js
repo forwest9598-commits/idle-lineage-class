@@ -179,6 +179,7 @@ function playerAttack() {
                     let _exDice = wpn ? (exT.s === 'L' ? wpn.dmgL : wpn.dmgS) : 2;
                     if (arrowData) _exDice = (exT.s === 'L') ? (wpn.dmgL + arrowData.dmgL) : (wpn.dmgS + arrowData.dmgS);
                     if (!getPhysicalDmg(_exDice, exT, wpn, arrowData, false, false, false).hit) {
+                        if (typeof vfxMiss === 'function') vfxMiss(exT);
                         logCombat(`【穿透】對 <span class="${getMobColor(exT.lv)}">${exT.n}</span> 的攻擊未命中。`, 'miss');
                         return;
                     }
@@ -243,6 +244,7 @@ function playerAttack() {
         if (target.curHp <= 0) killMob(mapState.targetIdx);
         else renderMobs();
     } else {
+        if (typeof vfxMiss === 'function') vfxMiss(target);
         logCombat(`對 <span class="${getMobColor(target.lv)}">${target.n}</span> 的攻擊未命中。`, 'miss');
     }
 
