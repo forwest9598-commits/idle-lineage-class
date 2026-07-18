@@ -2000,7 +2000,7 @@ function renderTownNPCMap(townId) {
     vis.forEach((npc, i) => {
         let ov = ovr[npc.id];
         let p = ov ? { x: ov[0], y: ov[1] } : (pos[i] || { x: 50, y: 60 });
-        // 玩家 NPC 使用 classanim 的無武器正面 idle，本體與影子各自同步播放。
+        // 玩家 NPC 使用 classanim 的無武器 idle（三方向隨機·由 wanderingBuyerSpriteData 依 id 決定），本體與影子各自同步播放。
         if (npc._wanderer && typeof wanderingBuyerSpriteData === 'function') {
             let spr = wanderingBuyerSpriteData(npc);
             let body0 = spr.frames && spr.frames[0] ? spr.frames[0].src : '';
