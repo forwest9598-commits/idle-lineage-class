@@ -2733,7 +2733,15 @@ button.classic-skill-cell { cursor:pointer; }
 .wandering-buyer-reward { margin-top: 5px; color: #7dd3fc; font-size: 13px; }
 .wandering-buyer-note { margin-top: 5px; color: #8f8781; font-size: 10px; font-weight: 400; }
 .wandering-buyer-state { flex: none; font-size: 11px; font-weight: 700; }
-.wandering-buyer-submit { justify-self: center; min-width: 180px; }
+.wandering-buyer-actions { display: flex; justify-content: center; gap: 10px; }
+.wandering-buyer-submit { min-width: 180px; }
+.wandering-buyer-dismiss {
+    min-width: 112px;
+    color: #fecaca;
+    border-color: #7f1d1d;
+    background: #3f1717;
+}
+.wandering-buyer-dismiss:hover { background: #5b1f1f; }
 #wandering-buyer-msg { min-height: 18px; text-align: center; font-size: 12px; }
 .wander-broadcast-name {
     display: inline;

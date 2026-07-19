@@ -148,7 +148,9 @@
             if (currency === 'gold') w.price = Math.max(1, Math.floor(Number(w.price) || 1));
             else w.reward = Math.max(1, Math.floor(Number(w.reward) || 1));
             w.alignmentValue = _normalizeAlignmentValue(w.alignmentValue);
-            w.broadcastStopped = !!w.broadcastStopped;
+            w.dismissed = !!w.dismissed;
+            w.dismissedAt = w.dismissed ? Math.max(0, Math.floor(Number(w.dismissedAt) || 0)) : 0;
+            w.broadcastStopped = !!w.broadcastStopped || w.dismissed;
             w.quietAt = Math.max(0, Math.floor(Number(w.quietAt) || 0));
             return true;
         });
@@ -385,7 +387,9 @@
             spawnedAt: now,
             expiresAt: now + WANDERER_LIFE_MS,
             broadcastStopped: false,
-            quietAt: 0
+            quietAt: 0,
+            dismissed: false,
+            dismissedAt: 0
         };
         if (currency === 'gold') {
             buyer.price = _makeGoldBuyerPrice(st, d, mult, buyer.alignmentValue);
@@ -399,7 +403,7 @@
         if (!Array.isArray(wanderers)) return '';
         return wanderers
             .filter(w => w && w.id && w.townId)
-            .map(w => [w.id, _wandererCurrency(w), w.townId, w.expiresAt].join('|'))
+            .map(w => [w.id, _wandererCurrency(w), w.townId, w.expiresAt, w.dismissed ? 1 : 0].join('|'))
             .sort()
             .join('||');
     }
@@ -409,10 +413,14 @@
         return st.wanderers.find(w => w && w.id === wandererId) || null;
     }
 
+    function _wandererPresent(w, now) {
+        return !!(w && !w.dismissed && Number(w.expiresAt) > (now == null ? Date.now() : now));
+    }
+
     function _findWanderersForTown(st, townId) {
         if (!st || !Array.isArray(st.wanderers)) return [];
         return st.wanderers
-            .filter(w => w && w.townId === townId && Number(w.expiresAt) > Date.now())
+            .filter(w => w && w.townId === townId && _wandererPresent(w))
             .sort((a, b) => _wandererCurrency(a).localeCompare(_wandererCurrency(b)) || String(a.id).localeCompare(String(b.id)));
     }
 
@@ -429,7 +437,7 @@
         // ⚠️ 到期守衛放在這裡＝單一真相：tick 路徑（_normalizeState 已濾）與 storage 多開同步路徑共用。
         //    WANDERER_LIFE_MS(2h) 剛好是 BROADCAST_MS(3min) 的整數倍，cycle 邊界正好落在到期瞬間，
         //    去重必然放行 → 另一分頁寫入時會替「已到期但本頁還沒 tick 清掉」的叫賣者重播喊話。
-        if (!w || w.broadcastStopped || Number(w.expiresAt) <= Date.now()) return;
+        if (!_wandererPresent(w) || w.broadcastStopped) return;
         if (typeof player === 'undefined' || !player || typeof logSys !== 'function') return;
         if (typeof state !== 'undefined' && state && state.ff) return;
         let spawnedAt = Math.max(0, Number(w.spawnedAt) || Date.now());
@@ -449,7 +457,7 @@
         let now = Date.now();
         let list = (st && Array.isArray(st.wanderers)) ? st.wanderers : [];
         return list
-            .filter(w => w && w.id && !w.broadcastStopped && Number(w.expiresAt) > now)
+            .filter(w => w && w.id && !w.broadcastStopped && _wandererPresent(w, now))
             .sort((a, b) => ((Number(a.spawnedAt) || 0) - (Number(b.spawnedAt) || 0)) || String(a.id).localeCompare(String(b.id)));
     }
 
@@ -547,7 +555,7 @@
         if (sig !== beforeSig || sig !== _lastMapSignature) _refreshTownMapIfNeeded(sig);
         renderWanderBroadcastPins(latest);   // 📌 v3.5.77 先更新釘選列（新到場/離場遞補），_announceWanderer 才知道誰已釘選不必重播
         latest.wanderers
-            .filter(w => w && Number(w.expiresAt) > now)
+            .filter(w => _wandererPresent(w, now))
             .forEach(_announceWanderer);
     }
 
@@ -718,7 +726,7 @@
         let w = _findWanderer(st, wandererId);
         // ⚠️ broadcastStopped（按過「吵死了」或已對話過）≠ 已離場：該玩家仍在城裡最長 2 小時、照常可交易。
         //    原本把兩者併成同一分支，會讓「馬上到」傳送（此函式是唯一入口）在剩餘生命期內再也用不了。
-        if (!w || Number(w.expiresAt) <= Date.now()) {
+        if (!_wandererPresent(w)) {
             // 📌 點到「已離場但還沒被下一次 tick 清掉」的釘選列：給明確回覆並立刻重畫（否則按了完全沒反應，像壞掉）
             if (typeof logSys === 'function') logSys('<span class="text-slate-400">這名玩家已經離開。</span>');
             _lastMapSignature = '__force__';   // 立繪也要跟著消失（比照成交路徑）
@@ -755,7 +763,7 @@
     function _stopWanderingBroadcast(wandererId) {
         let result = _withStateLock(st => {
             let w = _findWanderer(st, wandererId);
-            if (!w || Number(w.expiresAt) <= Date.now()) {
+            if (!_wandererPresent(w)) {
                 // 🏷️ v3.5.94 標記 gone＝「真的離場」，讓呼叫端能跟 already／busy／寫入失敗這些「只是沒停下叫賣」區分開。
                 return { commit: false, gone: true, error: '這名玩家已經離開。' };
             }
@@ -771,7 +779,7 @@
     function silenceWanderingBuyer(wandererId) {
         let st = _readState();
         let w = _findWanderer(st, wandererId);
-        if (!w || Number(w.expiresAt) <= Date.now()) {
+        if (!_wandererPresent(w)) {
             _closeWanderingShoutMenu();
             return;
         }
@@ -814,7 +822,7 @@
     function hurryToWanderingBuyer(wandererId) {
         let st = _readState();
         let w = _findWanderer(st, wandererId);
-        if (!w || Number(w.expiresAt) <= Date.now()) {
+        if (!_wandererPresent(w)) {
             _closeWanderingShoutMenu();
             return;
         }
@@ -876,7 +884,7 @@
     function openWanderingBuyerDialog(wandererId) {
         let st = _readState();
         let w = wandererId ? _findWanderer(st, wandererId) : _currentTownWanderer(st);
-        if (!w || Number(w.expiresAt) <= Date.now()) {
+        if (!_wandererPresent(w)) {
             if (typeof logSys === 'function') logSys('<span class="text-slate-400">這名玩家已經離開。</span>');
             // ⚠️ _activeSignature 不排除已到期者＝簽章與 _lastMapSignature 相同 → _refreshTownMapIfNeeded 會早退成空操作，
             //    幽靈立繪最長會留在城鎮地圖 30 秒（tick 間隔）並可重複點擊。比照成交路徑強制重畫。
@@ -898,7 +906,7 @@
         if (!div) return;
         let st = _readState();
         let w = wandererId ? _findWanderer(st, wandererId) : _currentTownWanderer(st);
-        if (!w || Number(w.expiresAt) <= Date.now()) {
+        if (!_wandererPresent(w)) {
             div.innerHTML = '<div class="p-8 text-center text-slate-400">這名玩家已經離開。</div>';
             return;
         }
@@ -932,7 +940,10 @@
                     </div>
                     <div class="${match.ok ? 'text-green-400' : 'text-red-400'} wandering-buyer-state">${match.ok ? '可交付' : '道具欄／倉庫缺少'}</div>
                 </div>
-                <button class="btn wandering-buyer-submit ${match.ok ? '' : 'opacity-60'}" onclick="performWanderingBuyerTrade('${_esc(w.id)}')">交付物品</button>
+                <div class="wandering-buyer-actions">
+                    <button class="btn wandering-buyer-dismiss" onclick="dismissWanderingBuyer('${_esc(w.id)}')">驅離</button>
+                    <button class="btn wandering-buyer-submit ${match.ok ? '' : 'opacity-60'}" onclick="performWanderingBuyerTrade('${_esc(w.id)}')">交付物品</button>
+                </div>
                 <div id="wandering-buyer-msg"></div>
             </div>`;
     }
@@ -942,10 +953,43 @@
         if (el) el.innerHTML = `<span class="${error ? 'text-red-400' : 'text-green-400'}">${_esc(text)}</span>`;
     }
 
+    function dismissWanderingBuyer(wandererId) {
+        let before = _readState();
+        let w = _findWanderer(before, wandererId);
+        if (!_wandererPresent(w)) {
+            _wanderingMessage('這名玩家已經離開。', true);
+            return;
+        }
+        let result = _withStateLock(st => {
+            let liveWanderer = _findWanderer(st, wandererId);
+            if (!_wandererPresent(liveWanderer)) {
+                return { commit: false, gone: true, error: '這名玩家已經離開。' };
+            }
+            liveWanderer.dismissed = true;
+            liveWanderer.dismissedAt = Date.now();
+            liveWanderer.broadcastStopped = true;
+            liveWanderer.quietAt = liveWanderer.dismissedAt;
+            return { name: liveWanderer.name, expiresAt: liveWanderer.expiresAt };
+        });
+        if (!result.ok) {
+            _wanderingMessage(result.error || '共用資料暫時忙碌，請稍後重試。', true);
+            return;
+        }
+        _lastBroadcastCycles[w.id] = 'dismissed';
+        _lastMapSignature = '__force__';
+        let after = result.state || _readState();
+        _refreshTownMapIfNeeded(_activeSignature(after.wanderers));
+        renderWanderBroadcastPins(after);
+        if (typeof logSys === 'function') {
+            logSys(`<span class="text-slate-300">你將 ${_wandererNameHtml(w)} 驅離了這座城鎮。</span>`);
+        }
+        try { closeNpcInteraction(); } catch (e) {}
+    }
+
     function performWanderingBuyerTrade(wandererId) {
         let before = _readState();
         let w = wandererId ? _findWanderer(before, wandererId) : _currentTownWanderer(before);
-        if (!w || Number(w.expiresAt) <= Date.now()) {
+        if (!_wandererPresent(w)) {
             _wanderingMessage('這名玩家已經離開。', true);
             return;
         }
@@ -956,7 +1000,7 @@
         }
         let result = _withStateLock(st => {
             let liveWanderer = _findWanderer(st, w.id);
-            if (!liveWanderer || Number(liveWanderer.expiresAt) <= Date.now()) {
+            if (!_wandererPresent(liveWanderer)) {
                 return { commit: false, error: '這筆收購已經結束。' };
             }
             let liveMatch = _findMatches([{ id: liveWanderer.itemId, en: liveWanderer.en }], st);
@@ -1394,6 +1438,7 @@
     window.silenceWanderingBuyer = silenceWanderingBuyer;
     window.hurryToWanderingBuyer = hurryToWanderingBuyer;
     window.renderWanderingBuyerDialog = renderWanderingBuyerDialog;
+    window.dismissWanderingBuyer = dismissWanderingBuyer;
     window.performWanderingBuyerTrade = performWanderingBuyerTrade;
     window.pandoraRelicSuggestionHTML = pandoraRelicSuggestionHTML;
     window.pandoraRelicOnSearchInput = pandoraRelicOnSearchInput;
