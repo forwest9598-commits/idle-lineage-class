@@ -83,6 +83,97 @@
         '你的意見我放倉庫了', '收到，完全不想聽', '再吵我加價收給你看', '你管天管地管不到我喊價', '先贏一場再教我安靜', '你這發言很有 Lv.1 的美感', '別鬧，市場不是給你哭的', '笑到我忘記要收什麼',
         '你這句話傷害大概 1 點', '你是不是把勇氣喝到嘴上了', '來啊，我站著等你', '你喊破喉嚨也不會變強', '嘴砲有安定值嗎', '你這氣勢連卷軸都點不亮', '別演了，大家都看著呢', '先存夠傳送費再兇'
     ];
+    const OFFLINE_TAUNT_CHOICES = {
+        lowPrice: [
+            '出 {price} 金幣收 {item}，你是少打一個零嗎？',
+            '這種價格也敢喊，你當整個頻道都是新手？',
+            '{price} 金幣留著買紅水吧，別拿來侮辱 {item}。',
+            '你的出價比掉寶率還難看，先去市場繞一圈。',
+            '開這種破價還敢叫人密你，臉皮點幾的？',
+            '收不起 {item} 就直說，不用在這裡裝行情大師。'
+        ],
+        price: [
+            '{price} 金幣的行情是你夢裡查到的嗎？',
+            '有錢喊價不代表你懂價格，先做點功課吧。',
+            '你這價格很有自信，可惜看起來沒什麼常識。',
+            '拿金幣砸頻道很帥嗎？先確定真的有人想賣。',
+            '喊得像市場老大，結果價格一看就露餡。',
+            '價格開成這樣，你是收裝還是在收笑話？'
+        ],
+        item: [
+            '連 {item} 都要靠洗頻收，你平常到底在打什麼？',
+            '為了 {item} 喊成這樣，看來你真的很缺。',
+            '收個 {item} 也能這麼高調，你是怕沒人認識你？',
+            '{item} 還沒收到，存在感倒是先刷滿了。',
+            '你跟 {item} 哪一個比較難掉？我看是你的面子。',
+            '一直喊 {item}，不知道的還以為你在解新手任務。'
+        ],
+        spam: [
+            '整個頻道都是你，收不到就安靜一點。',
+            '喊這麼久還收不到，問題可能不是頻道。',
+            '別再刷存在感了，大家早就看到你要收什麼。',
+            '{town}不是你家的廣播台，少洗幾次行不行？',
+            '收東西靠行情，不是靠把別人的訊息洗掉。',
+            '你再喊下去，大家記住的只會是你很吵。'
+        ],
+        strength: [
+            '嘴那麼大聲，戰力有跟上嗎？',
+            '先把裝備穿好，再來裝市場老大。',
+            '你是來收裝，還是來證明自己很缺存在感？',
+            '有本事出安全區講，別只會躲著喊。',
+            '看你喊得這麼有力，我還以為你能單吃頭目。',
+            '你這氣勢很強，可惜看起來只有頻道吃得到傷害。'
+        ]
+    };
+    const OFFLINE_NPC_CHAT = {
+        fierce: {
+            open: ['叫三小？', '你又是哪位？', '嘴很秋喔，', '敢這樣講，'],
+            end: ['不爽就來城外。', '有種報座標。', '別只會躲安全區。', '先打贏我再繼續嘴。']
+        },
+        proud: {
+            open: ['笑死，', '就這？', '我還以為是哪位大人物，', '嘴完了嗎？'],
+            end: ['先照照鏡子再回來。', '你的意見我先丟倉庫。', '再練幾級才比較有說服力。', '別急著在頻道丟臉。']
+        },
+        trader: {
+            open: ['先學會看行情再開口，', '做生意不是靠你一張嘴，', '沒貨就別裝專家，', '市場看久一點再來，'],
+            end: ['有東西就拿來，沒有就旁邊站。', '成交不了也輪不到你教我。', '行情不是你喊了算。', '別拿嘴巴當貨交。']
+        },
+        cool: {
+            open: ['講完了嗎？', '嗯，然後呢？', '你很在意我喔，', '特地點我就為了這句？'],
+            end: ['要賣就密，不賣就算了。', '我繼續收，你慢慢氣。', '別讓自己看起來更急。', '省點力氣去打怪吧。']
+        }
+    };
+    const OFFLINE_NPC_REPLY_CORES = {
+        price: [
+            '我開 {price} 金幣，收不收輪不到你替別人決定。',
+            '價格看不懂就別裝行情專家。',
+            '嫌價格不合就別賣，市場又不是只有你。',
+            '至少我金幣拿得出來，你有貨嗎？',
+            '會嫌價的人很多，真的有 {item} 的沒幾個。'
+        ],
+        item: [
+            '至少我收得起 {item}，你身上有嗎？',
+            '打不到 {item} 才需要收，這道理很難懂？',
+            '我要收什麼關你什麼事，先顧好自己的背包。',
+            '{item} 還沒看到，倒是先看到你跑來刷存在感。',
+            '有貨就拿出來，沒貨別拿嘴巴湊數。'
+        ],
+        spam: [
+            '頻道又不是你租的，我喊我的，你可以不看。',
+            '我每三分鐘才喊一次，這樣你就破防了？',
+            '大家都沒說話，就你急著跳出來管。',
+            '收得到自然就不喊，還用你提醒？',
+            '嫌吵可以關頻道，別把自己當管理員。'
+        ],
+        strength: [
+            '你 Lv.{level} 的自信，是哪隻怪掉的？',
+            '{player}，先出安全區再說，別只讓鍵盤替你打。',
+            '戰力先報出來，不然我以為在跟新手說話。',
+            '嘴砲沒有命中加成，你喊再大聲也一樣。',
+            '等你能單吃頭目，再來評論別人的裝備。'
+        ]
+    };
+    const OFFLINE_NPC_REPEAT_OPENERS = ['同一套一直講，', '又是這句？', '你只會抓著這點喔？', '講第二次也不會比較有傷害，'];
 
     const RELIC_CATEGORIES = {
         weapon: { label: '武器遺物', short: '武器' },
@@ -94,6 +185,8 @@
     let _lastMapSignature = '';
     let _classFrameCache = Object.create(null);
     let _wanderingShoutMenu = null;
+    let _activeTauntChoices = null;
+    const _wandererChatMemory = new Map();
 
     function _esc(s) {
         if (typeof _pandoraEsc === 'function') return _pandoraEsc(s);
@@ -267,6 +360,106 @@
         let a = _normalizeAlignmentValue(w && w.alignmentValue);
         let n = w && w.name ? w.name : '';
         return (typeof pvpNameHtml === 'function') ? pvpNameHtml(n, a, 'font-bold') : `<span class="font-bold">${_esc(n)}</span>`;
+    }
+
+    function _chatHash(text) {
+        let h = 2166136261;
+        text = String(text || '');
+        for (let i = 0; i < text.length; i++) {
+            h ^= text.charCodeAt(i);
+            h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+    }
+
+    function _chatMemoryFor(w) {
+        let id = String(w && w.id || '');
+        let memory = _wandererChatMemory.get(id);
+        if (!memory) {
+            memory = { turns: 0, lastIntent: '', used: Object.create(null), touchedAt: Date.now() };
+            _wandererChatMemory.set(id, memory);
+        }
+        memory.touchedAt = Date.now();
+        if (_wandererChatMemory.size > 20) {
+            let oldestId = '', oldestAt = Infinity;
+            _wandererChatMemory.forEach((entry, entryId) => {
+                if (entryId !== id && entry.touchedAt < oldestAt) {
+                    oldestAt = entry.touchedAt;
+                    oldestId = entryId;
+                }
+            });
+            if (oldestId) _wandererChatMemory.delete(oldestId);
+        }
+        return memory;
+    }
+
+    function _chatPick(memory, key, list) {
+        if (!Array.isArray(list) || !list.length) return '';
+        let recent = memory.used[key] || [];
+        let available = list.filter(text => !recent.includes(text));
+        if (!available.length) available = list.slice();
+        let picked = available[Math.floor(Math.random() * available.length)] || available[0];
+        recent.push(picked);
+        memory.used[key] = recent.slice(-Math.min(4, Math.max(1, list.length - 1)));
+        return picked;
+    }
+
+    function _chatContext(w) {
+        let d = (typeof DB !== 'undefined' && DB.items) ? DB.items[w.itemId] : null;
+        let isGold = _wandererCurrency(w) === 'gold';
+        return {
+            item: _requirementText(w.itemId, w.en),
+            price: isGold ? _goldBuyerPrice(w).toLocaleString() : '龍之鑽石',
+            town: _townName(w.townId),
+            player: (typeof player !== 'undefined' && player && player.name) ? player.name : '你',
+            level: Math.max(1, Math.floor(Number(typeof player !== 'undefined' && player && player.lv) || 1)),
+            basePrice: Math.max(0, Math.floor(Number(d && d.p) || 0)),
+            isGold: isGold
+        };
+    }
+
+    function _chatFill(template, ctx) {
+        return String(template || '').replace(/\{(item|price|town|player|level)\}/g, (_, key) => String(ctx[key] == null ? '' : ctx[key]));
+    }
+
+    function _chatPersona(w) {
+        if (_isEvilAlignmentValue(w && w.alignmentValue)) return 'fierce';
+        let alignment = _normalizeAlignmentValue(w && w.alignmentValue);
+        let pool = alignment >= 1000 ? ['cool', 'trader'] : ['proud', 'trader', 'cool'];
+        return pool[_chatHash((w && w.id) + '|persona') % pool.length];
+    }
+
+    function _buildOfflineTauntChoices(w) {
+        let memory = _chatMemoryFor(w);
+        let ctx = _chatContext(w);
+        let pools = [];
+        if (ctx.isGold) {
+            let low = ctx.basePrice > 0 && _goldBuyerPrice(w) < ctx.basePrice;
+            pools.push({ intent: 'price', key: low ? 'lowPrice' : 'price' });
+        } else {
+            pools.push({ intent: 'item', key: 'item' });
+        }
+        pools.push({ intent: 'spam', key: 'spam' }, { intent: 'strength', key: 'strength' });
+        return pools.map(entry => ({
+            intent: entry.intent,
+            text: _chatFill(_chatPick(memory, 'choice-' + entry.key, OFFLINE_TAUNT_CHOICES[entry.key]), ctx)
+        }));
+    }
+
+    function _buildOfflineNpcReply(w, choice) {
+        let memory = _chatMemoryFor(w);
+        let ctx = _chatContext(w);
+        let personaKey = _chatPersona(w);
+        let persona = OFFLINE_NPC_CHAT[personaKey];
+        let repeated = memory.lastIntent === choice.intent;
+        let opener = repeated
+            ? _chatPick(memory, 'repeat-open', OFFLINE_NPC_REPEAT_OPENERS)
+            : _chatPick(memory, 'open-' + personaKey, persona.open);
+        let core = _chatPick(memory, 'reply-' + choice.intent, OFFLINE_NPC_REPLY_CORES[choice.intent] || OFFLINE_NPC_REPLY_CORES.item);
+        let ending = memory.turns > 0 ? _chatPick(memory, 'end-' + personaKey, persona.end) : '';
+        memory.turns += 1;
+        memory.lastIntent = choice.intent;
+        return _chatFill(opener + core + ending, ctx);
     }
 
     function _isEquipmentDef(d) {
@@ -448,7 +641,7 @@
         //    首次到場的喊話仍照舊進日誌，排隊中（第 3 位以後）也維持原本每 3 分鐘的廣播，才不會完全看不到。
         if (cycle > 0 && _pinnedWandererIds().has(w.id)) { _lastBroadcastCycles[w.id] = cycle; return; }
         _lastBroadcastCycles[w.id] = cycle;
-        // 名稱可點擊；選擇「吵死了」後只會停止這名玩家後續的廣播。
+        // 名稱可點擊；可傳送、嘲諷，選擇「吵死了」後只會停止這名玩家後續的廣播。
         logSys(_broadcastLineHTML(w));
     }
 
@@ -714,7 +907,27 @@
             _wanderingShoutMenu.parentNode.removeChild(_wanderingShoutMenu);
         }
         _wanderingShoutMenu = null;
+        _activeTauntChoices = null;
         if (_shoutMenuDocHandler) { try { document.removeEventListener('click', _shoutMenuDocHandler); } catch (e) {} _shoutMenuDocHandler = null; }
+    }
+
+    function _mountWanderingShoutMenu(menu, ev) {
+        document.body.appendChild(menu);
+        let x = ev && Number.isFinite(ev.clientX) ? ev.clientX : Math.round(window.innerWidth / 2);
+        let y = ev && Number.isFinite(ev.clientY) ? ev.clientY : Math.round(window.innerHeight / 2);
+        let rect = menu.getBoundingClientRect();
+        menu.style.left = Math.max(8, Math.min(x, window.innerWidth - rect.width - 8)) + 'px';
+        menu.style.top = Math.max(8, Math.min(y + 8, window.innerHeight - rect.height - 8)) + 'px';
+        _wanderingShoutMenu = menu;
+
+        // 點在選單 padding 不消耗監聽器；只有點到選單外才關閉。
+        setTimeout(() => {
+            if (_wanderingShoutMenu !== menu) return;
+            _shoutMenuDocHandler = function (e) {
+                if (!_wanderingShoutMenu || !_wanderingShoutMenu.contains(e.target)) _closeWanderingShoutMenu();
+            };
+            document.addEventListener('click', _shoutMenuDocHandler);
+        }, 0);
     }
 
     function openWanderingShoutMenu(wandererId, ev) {
@@ -739,26 +952,66 @@
         menu.id = 'wandering-shout-menu';
         menu.className = 'wandering-shout-menu';
         menu.innerHTML =
+            `<button type="button" class="wandering-taunt-entry" onclick="openWanderingTauntMenu('${_esc(w.id)}',event)">嘲諷</button>` +
             (w.broadcastStopped ? '' : `<button type="button" onclick="silenceWanderingBuyer('${_esc(w.id)}')">吵死了</button>`) +   // 已靜音者不再顯示「吵死了」
             `<button type="button" onclick="hurryToWanderingBuyer('${_esc(w.id)}')">馬上到</button>`;
-        document.body.appendChild(menu);
+        _mountWanderingShoutMenu(menu, ev);
+    }
 
-        let x = ev && Number.isFinite(ev.clientX) ? ev.clientX : Math.round(window.innerWidth / 2);
-        let y = ev && Number.isFinite(ev.clientY) ? ev.clientY : Math.round(window.innerHeight / 2);
-        let rect = menu.getBoundingClientRect();
-        menu.style.left = Math.max(8, Math.min(x, window.innerWidth - rect.width - 8)) + 'px';
-        menu.style.top = Math.max(8, Math.min(y + 8, window.innerHeight - rect.height - 8)) + 'px';
-        _wanderingShoutMenu = menu;
+    function openWanderingTauntMenu(wandererId, ev) {
+        if (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+        }
+        _closeWanderingShoutMenu();
+        let st = _readState();
+        let w = _findWanderer(st, wandererId);
+        if (!_wandererPresent(w)) {
+            if (typeof logSys === 'function') logSys('<span class="text-slate-400">這名玩家已經離開。</span>');
+            renderWanderBroadcastPins(st);
+            return;
+        }
+        let choices = _buildOfflineTauntChoices(w);
+        _activeTauntChoices = { wandererId: w.id, choices: choices, createdAt: Date.now() };
+        let menu = document.createElement('div');
+        menu.id = 'wandering-shout-menu';
+        menu.className = 'wandering-shout-menu wandering-taunt-menu';
+        menu.innerHTML =
+            `<div class="wandering-taunt-heading">選一句回 ${_wandererNameHtml(w)}</div>` +
+            choices.map((choice, index) =>
+                `<button type="button" onclick="tauntWanderingBuyer('${_esc(w.id)}',${index})">${_esc(choice.text)}</button>`
+            ).join('');
+        _mountWanderingShoutMenu(menu, ev);
+    }
 
-        // ⚠️ 不可用 { once: true }：點在選單自身的 padding 死區時不關閉，但監聽器已被消耗且無人重掛
-        //    → 之後點畫面任何地方都關不掉（叫賣者到期後名字鈕消失，孤兒選單就永遠蓋在畫面上）。
-        //    改為常駐具名 handler，由 _closeWanderingShoutMenu 統一解除。
-        setTimeout(() => {
-            _shoutMenuDocHandler = function (e) {
-                if (!_wanderingShoutMenu || !_wanderingShoutMenu.contains(e.target)) _closeWanderingShoutMenu();
-            };
-            document.addEventListener('click', _shoutMenuDocHandler);
-        }, 0);
+    function tauntWanderingBuyer(wandererId, choiceIndex) {
+        let active = _activeTauntChoices;
+        let choice = active && active.wandererId === wandererId && Date.now() - active.createdAt < 60000
+            ? active.choices[Math.max(0, Math.floor(Number(choiceIndex) || 0))]
+            : null;
+        let st = _readState();
+        let w = _findWanderer(st, wandererId);
+        _closeWanderingShoutMenu();
+        if (!_wandererPresent(w)) {
+            if (typeof logSys === 'function') logSys('<span class="text-slate-400">這名玩家已經離開。</span>');
+            renderWanderBroadcastPins(st);
+            return;
+        }
+        if (!choice) {
+            if (typeof logSys === 'function') logSys('<span class="text-slate-400">嘲諷選項已失效，請重新點選這名玩家。</span>');
+            return;
+        }
+        let reply = _buildOfflineNpcReply(w, choice);
+        if (typeof logSys === 'function') {
+            logSys(
+                `<span class="wander-chat-out"><span class="wander-chat-arrow">-&gt;</span> ` +
+                `<span class="wander-chat-target">[${_wandererNameHtml(w)}]</span> ${_esc(choice.text)}</span>`
+            );
+            logSys(
+                `<span class="wander-chat-in"><span class="wander-chat-speaker">[${_wandererNameHtml(w)}]</span> ` +
+                `${_esc(reply)}</span>`
+            );
+        }
     }
 
     function _stopWanderingBroadcast(wandererId) {
@@ -1436,6 +1689,8 @@
     window.wanderingBuyerSpriteData = wanderingBuyerSpriteData;
     window.openWanderingBuyerDialog = openWanderingBuyerDialog;
     window.openWanderingShoutMenu = openWanderingShoutMenu;
+    window.openWanderingTauntMenu = openWanderingTauntMenu;
+    window.tauntWanderingBuyer = tauntWanderingBuyer;
     window.silenceWanderingBuyer = silenceWanderingBuyer;
     window.hurryToWanderingBuyer = hurryToWanderingBuyer;
     window.renderWanderingBuyerDialog = renderWanderingBuyerDialog;

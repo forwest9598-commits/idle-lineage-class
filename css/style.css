@@ -2785,6 +2785,26 @@ button.classic-skill-cell { cursor:pointer; }
     background: rgba(183, 146, 62, .18);
     color: #f4df9e;
 }
+.wandering-shout-menu .wandering-taunt-entry { color: #f3b5a9; }
+.wandering-shout-menu .wandering-taunt-entry:hover {
+    background: rgba(153, 63, 51, .24);
+    color: #ffd2c8;
+}
+.wandering-taunt-menu {
+    width: min(340px, calc(100vw - 16px));
+}
+.wandering-taunt-heading {
+    padding: 7px 10px 8px;
+    border-bottom: 1px solid rgba(183, 146, 62, .32);
+    color: #b8afa5;
+    font-size: 11px;
+    line-height: 1.35;
+}
+.wandering-taunt-menu button {
+    padding: 9px 11px;
+    white-space: normal;
+    line-height: 1.45;
+}
 /* 📌 v3.5.77 NPC 叫賣釘選列（#sys-log-pins·index.html 位於 #sys-log 上方）：
    最多兩條常駐在「系統與物品日誌」頂端不被推走；被互動(吵死了/馬上到/開對話/成交)或離場後自動換下一位。
    ⚠️ 用 :empty 收起整條（不用 Tailwind .hidden：ID 選擇器權重會壓過 class，切換會失效）。 */
