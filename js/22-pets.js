@@ -28,7 +28,7 @@ const PET_BOOK = {
     '柯利':     { kind:'phys', tier:0, lv0:5, hp0:40, mp0:5,  hpUp:[8,11], mpUp:[3,4], hpReg:5, mpReg:0, apm:60,    capm:0,     stun:0.54, cha:6,  evo:'高等柯利', sk:[] },
     '虎男':     { kind:'spec', tier:0, lv0:5, hp0:40, mp0:5,  hpUp:[8,14], mpUp:[3,5], hpReg:5, mpReg:0, apm:72,    capm:0,     stun:0.58, cha:12, evo:'真‧虎男', sk:[] },
     '高麗幼犬': { kind:'spec', tier:0, lv0:5, hp0:30, mp0:30, hpUp:[3,6],  mpUp:[3,5], hpReg:5, mpReg:5, apm:45,    capm:51.43, stun:0.58, cha:12, evo:'高麗犬', sk:[{ n:'瘋狂咬擊', mp:10, kind:'magic', d:[2,10], ele:'none' }] },
-    '袋鼠':     { kind:'spec', tier:0, lv0:5, hp0:25, mp0:5,  hpUp:[3,8],  mpUp:[2,5], hpReg:2, mpReg:3, apm:90,    capm:72,    stun:0.58, cha:12, evo:'高等袋鼠', sk:[{ n:'袋鼠火焰拳', mp:6, kind:'magic', d:[1,18], ele:'fire' }] },
+    '袋鼠':     { kind:'spec', tier:0, lv0:5, hp0:25, mp0:5,  hpUp:[3,8],  mpUp:[2,5], hpReg:2, mpReg:3, apm:90,    capm:72,    stun:0.58, cha:12, drPierce:0.35, evo:'高等袋鼠', sk:[{ n:'袋鼠火焰拳', mp:6, kind:'magic', d:[1,18], ele:'fire' }] },
     '熊貓':     { kind:'spec', tier:0, lv0:5, hp0:30, mp0:10, hpUp:[8,11], mpUp:[2,4], hpReg:2, mpReg:3, apm:60,    capm:68.57, stun:0.58, cha:12, evo:'高等熊貓', sk:[{ n:'熊貓爆擊', mp:9, kind:'extra', crit:true, add:0 }] },
     '猴子':     { kind:'spec', tier:0, lv0:5, hp0:30, mp0:30, hpUp:[3,8],  mpUp:[3,5], hpReg:2, mpReg:3, apm:51.43, capm:51.43, stun:0.58, cha:12, evo:'超級猴子', sk:[{ n:'猴子氣功波', mp:8, kind:'magic', d:[1,20], ele:'none' }] },
     '頑皮龍':   { kind:'spec', tier:0, lv0:5, hp0:40, mp0:10, hpUp:[8,14], mpUp:[3,5], hpReg:5, mpReg:8, apm:53.33, capm:48,    stun:0.58, cha:15, evo:'高等頑皮龍', sk:[{ n:'頑皮龍火球', mp:10, kind:'magic', d:[2,10], ele:'fire' }] },
@@ -48,7 +48,7 @@ const PET_BOOK = {
     '高等柯利':     { kind:'phys', tier:1, lv0:1, hpUp:[10,14], mpUp:[3,4], hpReg:8,  mpReg:0,  apm:60,    capm:0,     stun:0.54, cha:6,  evo:null, sk:[] },
     '真‧虎男':     { kind:'spec', tier:1, lv0:1, hpUp:[10,15], mpUp:[3,5], hpReg:5,  mpReg:5,  apm:72,    capm:60,    stun:0.58, cha:12, evo:null, sk:[{ n:'爆裂勾爪', mp:5, kind:'extra', add:5 }] },
     '高麗犬':       { kind:'spec', tier:1, lv0:1, hpUp:[3,8],   mpUp:[3,5], hpReg:2,  mpReg:10, apm:60,    capm:51.43, stun:0.58, cha:12, evo:null, sk:[{ n:'瘋狂咬擊', mp:10, kind:'magic', d:[2,10], ele:'none', w:50 }, { n:'汪汪咬擊', mp:10, kind:'magic', d:[3,10], ele:'none', w:50 }] },
-    '高等袋鼠':     { kind:'spec', tier:1, lv0:1, hpUp:[3,8],   mpUp:[3,5], hpReg:2,  mpReg:5,  apm:90,    capm:72,    stun:0.58, cha:12, evo:null, sk:[{ n:'高等袋鼠火焰拳', mp:12, kind:'magic', d:[2,18], ele:'fire' }] },
+    '高等袋鼠':     { kind:'spec', tier:1, lv0:1, hpUp:[3,8],   mpUp:[3,5], hpReg:2,  mpReg:5,  apm:90,    capm:72,    stun:0.58, cha:12, drPierce:0.35, evo:null, sk:[{ n:'高等袋鼠火焰拳', mp:12, kind:'magic', d:[2,18], ele:'fire' }] },
     '高等熊貓':     { kind:'spec', tier:1, lv0:1, hpUp:[8,16],  mpUp:[2,4], hpReg:2,  mpReg:5,  apm:60,    capm:68.57, stun:0.58, cha:12, evo:null, sk:[{ n:'高等熊貓爆擊', mp:18, kind:'extra', crit:true, add:10 }] },
     '超級猴子':     { kind:'spec', tier:1, lv0:1, hpUp:[3,8],   mpUp:[3,5], hpReg:2,  mpReg:5,  apm:51.43, capm:51.43, stun:0.58, cha:12, evo:null, sk:[{ n:'超級猴子氣功波', mp:15, kind:'magic', d:[2,20], ele:'none' }] },
     '高等頑皮龍':   { kind:'spec', tier:1, lv0:1, hpUp:[10,15], mpUp:[3,5], hpReg:5,  mpReg:8,  apm:55.38, capm:51.43, stun:0.58, cha:15, evo:null, sk:[{ n:'頑皮龍火球', mp:10, kind:'magic', d:[2,10], ele:'fire', w:50 }, { n:'頑皮龍大火球', mp:12, kind:'magic', d:[2,12], ele:'fire', w:50 }] },
@@ -119,6 +119,7 @@ function petDerive(p) {
         kind: def.kind, tier: t,
         dice: dice,
         flat: flat,
+        drPierce: Math.max(0, Math.min(0.95, def.drPierce || 0)),
         damageMult: (t === 2 ? 1 : (PET_TIER_DMG_MULT[t] || 1) * survivalDmgMult) * petMasteryDmgMult(),   // 👑 夥伴精通 ×1.5 折於此＝普攻(petAttackOnce)／傷害技能(petCastSkill)／extra技(走普攻) 三路徑一次覆蓋
         hit: Math.floor((g.hit0 + Math.floor(lv * g.hitG) + speedHit + t * 3 + elite.hit + PET_HIT_TUNE) * petMasteryHitMult()),   // 👑 夥伴精通 ×1.5
         skillFlat: Math.floor(lv * g.skillG * castMul * skillTier * PET_DMG_TUNE.skill) + _gInt,
@@ -910,7 +911,8 @@ function petAttackOnce(p, d, target, forceCrit, addDmg, skName) {
         let r = roll(1, 20);
         let heavy = (r === 20) || !!forceCrit;
         if (heavy || (r !== 1 && hv >= r)) {
-            let dmg = (heavy ? d.dice : roll(1, d.dice)) + d.flat + cb.dmg + (addDmg || 0) + pg.dmg + (_ia ? _ia.ed : 0) - (target.dr || 0) - (_pst.weaken > 0 ? 5 : 0);
+            let targetDr = Math.floor((target.dr || 0) * (1 - (d.drPierce || 0)));
+            let dmg = (heavy ? d.dice : roll(1, d.dice)) + d.flat + cb.dmg + (addDmg || 0) + pg.dmg + (_ia ? _ia.ed : 0) - targetDr - (_pst.weaken > 0 ? 5 : 0);
             dmg = Math.max(1, Math.floor(dmg));
             dmg = Math.max(1, Math.floor(dmg * (d.damageMult || 1)));   // 🐾 型態增傷＋低血高傷取向（普攻／extra 技能共用）
             if (skName && typeof _relicPetSkillMult === 'function') dmg = Math.max(1, Math.floor(dmg * _relicPetSkillMult()));

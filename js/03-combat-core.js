@@ -1088,11 +1088,11 @@ function pvpOnPlayerDeath(killers) {
 function pvpOnKillMob(mob) {
     if (!mob || !player || !player.cls) return;
     pvpEnsureState();
-    if (mob.pledgeEnemy || mob.siegeEnemy || mob.race === '血盟') return;
+    if (mob.pledgeEnemy || mob.siegeEnemy || mob.race === '血盟' || (typeof isSiegeArea === 'function' && typeof mapState !== 'undefined' && mapState && isSiegeArea(mapState.current))) return;
     if (mob.trollPlayer) {
         let a = pvpClampAlignment(mob._pvpAlignment || 0);
-        if (a >= PVP_ALIGN_JUSTICE) pvpChangeAlignment(-3000);
-        else if (a > PVP_ALIGN_EVIL) pvpChangeAlignment(-500);
+        if (a >= PVP_ALIGN_JUSTICE) pvpChangeAlignment(-6000);
+        else if (a > PVP_ALIGN_EVIL) pvpChangeAlignment(-3000);
         pvpRegisterKillWhisper(mob);
         if (player.pvpRevengeList && player.pvpRevengeList.length) {
             let _n0 = player.pvpRevengeList.length;
